@@ -3,6 +3,9 @@
 ## Overview
 **Rediscovering Apollo 11** is a Java-based project that leverages **Redis OM Spring**, **vector search**, and **retrieval-augmented generation (RAG)** to explore Apollo 11 mission data. This project integrates structured and unstructured data, including transcripts, photographs, and extracted information, to enable powerful semantic search and querying capabilities.
 
+## Talk
+This implementation is the support demo for the [Rediscovering Apollo 11: Using Spring AI + Redis OM Spring to explore the trip to the moon!](https://sessionize.com/s/RaphaelDeLio/rediscovering-apollo-11-using-spring-ai-redis-om-s/112536) talk.
+
 ## How It Works
 - The `./src/resources/Apollo11_Data` directory contains data sourced from [Apollo in Real Time](https://apolloinrealtime.org), including utterances, photographs, and the table of contents.
 - We use **Redis OM Spring**, an extension of Spring Data Redis, to efficiently load and manage this data in Redis.
