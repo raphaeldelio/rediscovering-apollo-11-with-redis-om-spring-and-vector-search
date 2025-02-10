@@ -1,0 +1,133 @@
+html {
+    height: 100%;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+body {
+    height: 100%;
+    font-family: "Space Grotesk", sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.wrapper {
+    flex: 1; /* Makes the content area expand */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    text-align: center;
+    color: #d92b2b;
+    font-size: 2rem;
+    margin-top: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+input {
+    width: 50%;
+    padding: 12px;
+    border: 2px solid #d92b2b;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    background-color: #d92b2b;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+}
+
+button:hover {
+    background-color: #b22222;
+}
+
+.container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+.column {
+    flex: 1;
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    min-height: 250px;
+}
+
+h2 {
+    text-align: center;
+    color: #d92b2b;
+    margin-bottom: 15px;
+}
+
+h3 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.collapsible {
+    background-color: #f1f1f1;
+    color: black;
+    cursor: pointer;
+    padding: 12px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 5px;
+    border-radius: 6px;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.collapsible:hover {
+    background-color: #e6e6e6;
+}
+
+.content {
+    display: none;
+    padding: 10px;
+    border-left: 3px solid #ccc;
+    margin-bottom: 10px;
+    border-radius: 6px;
+}
+
+.content.active {
+    display: block;
+}
+
+footer {
+    background-color: #d92b2b;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    margin-top: auto;
+}
+
+footer img {
+    width: 120px;
+    vertical-align: middle;
+}
