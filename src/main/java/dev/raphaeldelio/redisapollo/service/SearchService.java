@@ -181,26 +181,23 @@ public class SearchService {
                 .toList();
     }
 
-    public List<Pair<SearchSemanticCache, Double>> getCacheResponse(String query) {
+    public List<Pair<SearchSemanticCache, Double>> getCacheResponse(String query, boolean isQuestion) {
         float[] embedding = embedder.getTextEmbeddingsAsFloats(List.of(query), SearchSemanticCache$.QUERY).get(0);
         SearchStream<SearchSemanticCache> stream = entityStream.of(SearchSemanticCache.class);
         return stream
                 .filter(SearchSemanticCache$.EMBEDDED_QUERY.knn(3, embedding))
+                .filter(SearchSemanticCache$.IS_QUESTION.eq(isQuestion))
                 .sorted(SearchSemanticCache$._EMBEDDED_QUERY_SCORE)
                 .map(Fields.of(SearchSemanticCache$._THIS, SearchSemanticCache$._EMBEDDED_QUERY_SCORE))
                 .collect(Collectors.toList());
     }
 
-    public void cacheResponse(String query, String answer, List<Map<String, String>> matchedDocuments) {
+    public void cacheResponse(String query, String answer, boolean isQuestion) {
         SearchSemanticCache cache = new SearchSemanticCache();
         cache.setId(UUID.randomUUID().toString());
         cache.setQuery(query);
         cache.setAnswer(answer);
-        cache.setMatchedDocuments(new ArrayList<>(
-                matchedDocuments.stream()
-                        .map(HashMap::new)
-                        .toList()
-        ));
+        cache.setQuestion(isQuestion);
         searchSemanticCacheRepository.save(cache);
     }
 

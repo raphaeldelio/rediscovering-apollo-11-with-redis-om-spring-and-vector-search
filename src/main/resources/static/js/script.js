@@ -1,12 +1,11 @@
 document.querySelectorAll(".toggle-btn").forEach(button => {
     button.addEventListener("click", function() {
         const targetId = this.getAttribute("data-target");
-        const targetElement = document.getElementById(targetId);
-        if (targetElement.style.display === "none") {
-            targetElement.style.display = "block";
-        } else {
-            targetElement.style.display = "none";
-        }
+        const targetElements = document.querySelectorAll(`[id^="${targetId}"]`);
+
+        targetElements.forEach(targetElement => {
+            targetElement.style.display = (targetElement.style.display === "none") ? "block" : "none";
+        });
     });
 });
 
@@ -92,7 +91,15 @@ function sendQuery(query, imageBase64) {
         // Render question-based response
         let questionsHTML = `
                 <p><strong>Q:</strong> ${questionData.query}</p>
-                <p><strong>A:</strong> ${questionData.answer}</p>`;
+                <p id="rag-question" style="display: none"><strong>A:</strong> ${questionData.answer}</p>`;
+
+        if (questionData.cachedQuery && questionData.cachedQuery.length > 0) {
+            questionsHTML += `
+                <div id="semantic-cache-question" style="display: none">
+                <p><strong>Cached Query: </strong>${questionData.cachedQuery}</p>
+                <p><strong>Cached Score: </strong>Cached Score: ${questionData.cachedScore}</p>
+                </div>`;
+        }
 
         if (questionData.matchedQuestions && questionData.matchedQuestions.length > 0) {
             questionsHTML += `<h4>Matched Questions:</h4><ul>`;
@@ -115,7 +122,15 @@ function sendQuery(query, imageBase64) {
         // Render summary-based response
         let summariesHTML = `
                 <p><strong>Q:</strong> ${summaryData.query}</p>
-                <p><strong>A:</strong> ${summaryData.answer}</p>`;
+                <p id="rag-question" style="display: none"><strong>A:</strong> ${summaryData.answer}</p>`;
+
+        if (summaryData.cachedQuery && summaryData.cachedQuery.length > 0) {
+            summariesHTML += `
+                <div id="semantic-cache-summary" style="display: none">
+                <p><strong>Cached Query: </strong>${summaryData.cachedQuery}</p>
+                <p><strong>Cached Score: </strong>Cached Score: ${summaryData.cachedScore}</p>
+                </div>`;
+        }
 
         if (summaryData.matchedSummaries && summaryData.matchedSummaries.length > 0) {
             summariesHTML += `<h4>Matched Summaries:</h4><ul>`;

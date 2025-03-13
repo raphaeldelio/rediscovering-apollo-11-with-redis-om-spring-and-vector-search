@@ -12,9 +12,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import redis.clients.jedis.search.schemafields.VectorField;
 
-import java.util.List;
-import java.util.Map;
-
 @Data
 @RequiredArgsConstructor(staticName = "of")
 @NoArgsConstructor
@@ -45,5 +42,6 @@ public class SearchSemanticCache {
 
     private String answer;
 
-    private List<Map<String, String>> matchedDocuments;
+    @Indexed
+    private boolean isQuestion;
 }

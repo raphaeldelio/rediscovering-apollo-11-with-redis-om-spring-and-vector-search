@@ -27,14 +27,14 @@ public class RedisApolloApplication {
             UtteranceSummariesService utteranceSummariesService) {
         return args -> {
             String filePath = "./src/main/resources/Apollo11_Data/";
-            utteranceService.loadUtteranceData(filePath + "gUtteranceData.json");
-            tocService.loadTOCData(filePath + "gTOCData.json");
-            tocService.populateUtterances();
-            photographsService.loadPhotographData(filePath + "gPhotoData.json");
-            tocService.summarize();
-            tocService.generateQuestions();
-            utteranceQuestionsService.embedQuestions();
-            utteranceSummariesService.embedSummaries();
+            //utteranceService.loadUtteranceData(filePath + "gUtteranceData.json");
+            //tocService.loadTOCData(filePath + "gTOCData.json");
+            //tocService.populateUtterances();
+            //photographsService.loadPhotographData(filePath + "gPhotoData.json");
+            //tocService.summarize();
+            //tocService.generateQuestions();
+            //utteranceQuestionsService.embedQuestions();
+            //utteranceSummariesService.embedSummaries();
         };
     }
 }

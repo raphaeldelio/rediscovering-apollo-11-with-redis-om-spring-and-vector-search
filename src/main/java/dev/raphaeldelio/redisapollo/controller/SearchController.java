@@ -53,12 +53,27 @@ public class SearchController {
                     );
                 }).toList();
 
+        List<Pair<SearchSemanticCache, Double>> queriesAndScores = searchService.getCacheResponse(query, false);
+        Optional<Pair<SearchSemanticCache, Double>> cacheResponse = queriesAndScores.stream().filter(queryAndScore -> queryAndScore.getSecond() < 0.1).findFirst();
+        if (cacheResponse.isPresent()) {
+            return Map.of(
+                    "query", query,
+                    "answer", cacheResponse.get().getFirst().getAnswer(),
+                    "matchedSummaries", matchedSummaries,
+                    "cachedQuery", cacheResponse.get().getFirst().getQuery(),
+                    "cachedScore", cacheResponse.get().getSecond()
+            );
+        }
+
         String enhancedAnswer = searchService.enhanceWithRag(
                 query,
                 summariesAndScores.stream()
                         .map(it -> it.getFirst().getUtterancesConcatenated())
                         .collect(Collectors.joining("\n"))
         );
+
+        searchService.cacheResponse(query, enhancedAnswer, false);
+
 
         return Map.of(
                 "query", query,
@@ -70,16 +85,6 @@ public class SearchController {
     @PostMapping("/search-by-question")
     public Map<String, Object> searchByQuestion(@RequestBody Map<String, String> requestBody) {
         String query = requestBody.get("query");
-
-        List<Pair<SearchSemanticCache, Double>> queriesAndScores = searchService.getCacheResponse(query);
-        Optional<Pair<SearchSemanticCache, Double>> cacheResponse = queriesAndScores.stream().filter(queryAndScore -> queryAndScore.getSecond() > 0.9).findFirst();
-        if (cacheResponse.isPresent()) {
-            return Map.of(
-                    "query", query,
-                    "answer", cacheResponse.get().getFirst().getAnswer(),
-                    "matchedQuestions", cacheResponse.get().getFirst().getMatchedDocuments()
-            );
-        }
 
         List<Pair<UtteranceQuestions, Double>> questionsAndScores = searchService.searchByQuestion(query);
         List<Map<String, String>> matchedQuestions = questionsAndScores.stream()
@@ -96,6 +101,18 @@ public class SearchController {
                     );
                 }).toList();
 
+        List<Pair<SearchSemanticCache, Double>> queriesAndScores = searchService.getCacheResponse(query, true);
+        Optional<Pair<SearchSemanticCache, Double>> cacheResponse = queriesAndScores.stream().filter(queryAndScore -> queryAndScore.getSecond() < 0.1).findFirst();
+        if (cacheResponse.isPresent()) {
+            return Map.of(
+                    "query", query,
+                    "answer", cacheResponse.get().getFirst().getAnswer(),
+                    "matchedQuestions", matchedQuestions,
+                    "cachedQuery", cacheResponse.get().getFirst().getQuery(),
+                    "cachedScore", cacheResponse.get().getSecond()
+            );
+        }
+
         String enhancedAnswer = searchService.enhanceWithRag(
                 query,
                 questionsAndScores.stream()
@@ -103,7 +120,7 @@ public class SearchController {
                         .collect(Collectors.joining("\n"))
         );
 
-        searchService.cacheResponse(query, enhancedAnswer, matchedQuestions);
+        searchService.cacheResponse(query, enhancedAnswer, true);
 
         return Map.of(
                 "query", query,
