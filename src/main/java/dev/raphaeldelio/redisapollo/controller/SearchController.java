@@ -102,7 +102,10 @@ public class SearchController {
                 }).toList();
 
         List<Pair<SearchSemanticCache, Double>> queriesAndScores = searchService.getCacheResponse(query, true);
-        Optional<Pair<SearchSemanticCache, Double>> cacheResponse = queriesAndScores.stream().filter(queryAndScore -> queryAndScore.getSecond() < 0.1).findFirst();
+        Optional<Pair<SearchSemanticCache, Double>> cacheResponse = queriesAndScores.stream().filter(
+                queryAndScore -> queryAndScore.getSecond() < 0.1
+        ).findFirst();
+
         if (cacheResponse.isPresent()) {
             return Map.of(
                     "query", query,
