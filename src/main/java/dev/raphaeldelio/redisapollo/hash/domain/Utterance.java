@@ -4,7 +4,6 @@ import com.redis.om.spring.annotations.*;
 import com.redis.om.spring.indexing.DistanceMetric;
 import com.redis.om.spring.indexing.VectorType;
 import lombok.*;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import redis.clients.jedis.search.schemafields.VectorField;
@@ -37,7 +36,7 @@ public class Utterance {
             schemaFieldType = SchemaFieldType.VECTOR,
             algorithm = VectorField.VectorAlgorithm.HNSW,
             type = VectorType.FLOAT32,
-            dimension = 768,
+            dimension = 384,
             distanceMetric = DistanceMetric.COSINE,
             initialCapacity = 10
     )

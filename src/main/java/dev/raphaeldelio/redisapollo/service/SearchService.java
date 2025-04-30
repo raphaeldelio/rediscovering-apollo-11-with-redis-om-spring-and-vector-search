@@ -100,7 +100,7 @@ public class SearchService {
                 ))
         );
 
-        String enhancedAnswer = response.getResult().getOutput().getContent();
+        String enhancedAnswer = response.getResult().getOutput().getText();
         logger.info("AI response: {}", enhancedAnswer);
         return enhancedAnswer;
     }

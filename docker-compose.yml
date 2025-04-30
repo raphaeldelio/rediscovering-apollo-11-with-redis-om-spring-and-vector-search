@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   redis:
-    image: redis:8.0-rc1  # Use Redis 8.0
+    image: redis:8.0-M03  # Use Redis 8.0
     container_name: redis_with_rdb
     restart: always
     volumes:

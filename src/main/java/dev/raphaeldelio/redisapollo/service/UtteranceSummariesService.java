@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -32,23 +33,24 @@ public class UtteranceSummariesService {
         // Retrieve all TOC entries and utterances in chronological order
         List<TOCData> tocDataList = tocDataRepository.findAll();
 
+        List<UtteranceSummaries> toSaveList = new ArrayList<>();
         // Iterate through each TOC entry
         for (TOCData currentTOC : tocDataList) {
             boolean areUtterancesAndQuestionsPresent = currentTOC.getConcatenatedUtterances() != null && currentTOC.getSummary() != null;
             if (areUtterancesAndQuestionsPresent) {
                 var id = currentTOC.getStartDate();
                 if (utteranceSummariesRepository.findById(id).isEmpty() || overwrite) {
-                    var grouped = UtteranceSummaries.of(
+                    var summary = UtteranceSummaries.of(
                             id,
                             currentTOC.getConcatenatedUtterances(),
                             currentTOC.getUtterances(),
                             currentTOC.getSummary()
                     );
-                    utteranceSummariesRepository.save(grouped);
-                    logger.info("Utterance summary saved: {}", id);
+                    toSaveList.add(summary);
                 }
             }
         }
-        logger.info("Grouping complete");
+        utteranceSummariesRepository.saveAll(toSaveList);
+        logger.info("Utterance summaries embedded");
     }
 }

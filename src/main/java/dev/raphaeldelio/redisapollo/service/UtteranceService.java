@@ -23,7 +23,6 @@ public class UtteranceService {
 
     public void loadUtteranceData(String filePath) {
         logger.info("Loading utterance data from file: {}", filePath);
-        //redisService.initializeCountMinSketch("wordCount", 1000, 5);
         fileService.readAndProcessFile(filePath, Utterance.class, data -> {
             for (Utterance utterance : data) {
                 if (!isValidUtterance(utterance)) {

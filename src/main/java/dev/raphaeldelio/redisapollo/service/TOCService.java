@@ -133,7 +133,7 @@ public class TOCService {
                         ))
                 );
 
-                tocData.setSummary(response.getResult().getOutput().getContent());
+                tocData.setSummary(response.getResult().getOutput().getText());
                 tocDataRepository.save(tocData);
                 logger.info("Summarized TOC entry: {}", tocData.getStartDate());
             }
@@ -164,7 +164,7 @@ public class TOCService {
                         ))
                 );
 
-                var questions = Arrays.stream(response.getResult().getOutput().getContent().split("\n")).filter(q -> !q.isBlank()).toList();
+                var questions = Arrays.stream(response.getResult().getOutput().getText().split("\n")).filter(q -> !q.isBlank()).toList();
                 tocData.setQuestions(questions);
                 tocDataRepository.save(tocData);
                 logger.info("Generated questions for TOC entry: {}", tocData.getStartDate());

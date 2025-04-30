@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
@@ -64,7 +63,7 @@ public class Photograph {
     )
     private byte[] embeddedDescription;
 
-    public Photograph(@NotNull String timestamp, @NotNull String name, String internalUrl, String externalUrl, String description) {
+    public Photograph(@NonNull String timestamp, @NonNull String name, String internalUrl, String externalUrl, String description) {
         this.timestamp = timestamp;
         this.name = name;
         this.internalUrl = internalUrl;
