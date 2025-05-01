@@ -13,12 +13,10 @@ public class UtteranceService {
 
     private final UtteranceRepository utteranceRepository;
     private final FileService fileService;
-    private final RedisService redisService;
 
     public UtteranceService(UtteranceRepository utteranceRepository, FileService fileService, RedisService redisService) {
         this.utteranceRepository = utteranceRepository;
         this.fileService = fileService;
-        this.redisService = redisService;
     }
 
     public void loadUtteranceData(String filePath) {
@@ -30,8 +28,6 @@ public class UtteranceService {
                 }
                 int utteranceSeconds = fileService.toHMSToSeconds(utterance.getTimestamp());
                 utterance.setTimestampInt(utteranceSeconds);
-
-                redisService.incrementZSet("utterances", utterance.getText());
                 utteranceRepository.save(utterance);
             }
         });
@@ -43,8 +39,6 @@ public class UtteranceService {
         if (utterance.getSpeakerId() == null) return false;
         if (utterance.getText() == null) return false;
         if (utterance.getSpeaker().isBlank()) return false;
-        //if ("SC".equals(utterance.getSpeaker())) return false;
-        //if ("P".equals(utterance.getSpeakerId())) return false;
         if ("...".equals(utterance.getText())) return false;
         return true;
     }

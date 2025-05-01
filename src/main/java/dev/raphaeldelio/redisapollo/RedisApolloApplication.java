@@ -33,19 +33,24 @@ public class RedisApolloApplication {
             UtteranceQuestionsService utteranceQuestionsService,
             UtteranceSummariesService utteranceSummariesService) {
         return args -> {
+            long startTime = System.currentTimeMillis();
             String filePath = "./src/main/resources/Apollo11_Data/";
-            //utteranceService.loadUtteranceData(filePath + "gUtteranceData.json");
+            utteranceService.loadUtteranceData(filePath + "gUtteranceData.json");
 
-            //tocService.loadTOCData(filePath + "gTOCData.json");
-            //tocService.populateUtterances();
+            tocService.loadTOCData(filePath + "gTOCData.json");
+            tocService.populateUtterances();
 
-            //tocService.summarize();
-            //utteranceSummariesService.embedSummaries(true);
+            tocService.summarize();
+            utteranceSummariesService.embedSummaries();
 
-            tocService.generateQuestions(true);
-            //utteranceQuestionsService.embedQuestions();
+            tocService.generateQuestions();
+            utteranceQuestionsService.embedQuestions();
 
-            //photographsService.loadPhotographData(filePath + "gPhotoData.json");
+            photographsService.loadPhotographData(filePath + "gPhotoData.json");
+
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+            System.out.println("Data loaded in " + duration + " milliseconds");
         };
     }
 

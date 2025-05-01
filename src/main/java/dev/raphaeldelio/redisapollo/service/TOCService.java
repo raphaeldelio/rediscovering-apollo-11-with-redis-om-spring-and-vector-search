@@ -17,6 +17,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Service
@@ -118,27 +122,88 @@ public class TOCService {
     public void summarize(boolean overwrite) {
         logger.info("Summarizing TOC entries");
         List<TOCData> tocDataList = tocDataRepository.findAll();
-        for (TOCData tocData : tocDataList) {
-            boolean isUtterancesPopulated = tocData.getConcatenatedUtterances() != null && !tocData.getConcatenatedUtterances().isBlank();
-            boolean shouldOverwrite = overwrite || tocData.getSummary() == null;
-            if (isUtterancesPopulated && shouldOverwrite) {
-                ChatResponse response = chatModel.call(
-                        new Prompt(List.of(
-                                new SystemMessage("""
-                                        You are a helpful assistant who summarizes utterances of the Apollo 11 mission. 
-                                        Make these summaries very dense with all curiosities included. 
-                                        Limit the summary to 512 words.
-                                        """),
-                                new UserMessage(tocData.getConcatenatedUtterances())
-                        ))
-                );
 
-                tocData.setSummary(response.getResult().getOutput().getText());
-                tocDataRepository.save(tocData);
-                logger.info("Summarized TOC entry: {}", tocData.getStartDate());
+        // Filter TOC entries that need summaries generated
+        List<TOCData> tocDataToProcess = tocDataList.stream()
+                .filter(tocData -> {
+                    boolean isUtterancesPopulated = tocData.getConcatenatedUtterances() != null && !tocData.getConcatenatedUtterances().isBlank();
+                    boolean shouldOverwrite = overwrite || tocData.getSummary() == null;
+                    return isUtterancesPopulated && shouldOverwrite;
+                })
+                .collect(Collectors.toList());
+
+        logger.info("Found {} TOC entries that need summaries generated", tocDataToProcess.size());
+
+        if (tocDataToProcess.isEmpty()) {
+            logger.info("No TOC entries need summaries generated");
+            return;
+        }
+
+        // Process in batches of 300
+        int batchSize = 300;
+        int totalBatches = (tocDataToProcess.size() + batchSize - 1) / batchSize; // Ceiling division
+
+        logger.info("Processing TOC entries in {} batches of up to {} entries each", totalBatches, batchSize);
+
+        // Create a virtual thread per task executor for better scalability with I/O-bound operations
+        // Virtual threads are lightweight and don't consume OS resources like platform threads
+        // This is ideal for I/O-bound tasks like API calls to OpenAI
+        try (ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor()) {
+
+            for (int batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+                int startIndex = batchIndex * batchSize;
+                int endIndex = Math.min(startIndex + batchSize, tocDataToProcess.size());
+                List<TOCData> currentBatch = tocDataToProcess.subList(startIndex, endIndex);
+
+                logger.info("Processing batch {} of {} ({} entries)", batchIndex + 1, totalBatches, currentBatch.size());
+
+                // Process each batch asynchronously
+                List<CompletableFuture<TOCData>> futures = currentBatch.stream()
+                        .map(tocData -> CompletableFuture.supplyAsync(() -> {
+                            try {
+                                logger.info("Generating summary for TOC entry: {}", tocData.getStartDate());
+
+                                ChatResponse response = chatModel.call(
+                                        new Prompt(List.of(
+                                                new SystemMessage("""
+                                                        You are a helpful assistant who summarizes utterances of the Apollo 11 mission.
+                                                        Make these summaries very dense with all curiosities included.
+                                                        Limit the summary to 512 words.
+                                                        """),
+                                                new UserMessage(tocData.getConcatenatedUtterances())
+                                        ))
+                                );
+
+                                tocData.setSummary(response.getResult().getOutput().getText());
+                                logger.info("Successfully generated summary for TOC entry: {}", tocData.getStartDate());
+                                return tocData;
+                            } catch (Exception e) {
+                                logger.error("Error generating summary for TOC entry: {}", tocData.getStartDate(), e);
+                                return null;
+                            }
+                        }, executorService))
+                        .toList();
+
+                // Wait for all futures in the current batch to complete before processing the next batch
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+                // Collect all processed TOCData objects and filter out nulls (from failed futures)
+                List<TOCData> processedBatch = futures.stream()
+                        .map(CompletableFuture::join)
+                        .filter(Objects::nonNull)
+                        .toList();
+
+                // Save all processed TOCData objects in batch
+                if (!processedBatch.isEmpty()) {
+                    tocDataRepository.saveAll(processedBatch);
+                    logger.info("Saved {} TOC entries in batch", processedBatch.size());
+                }
+
+                logger.info("Completed batch {} of {}", batchIndex + 1, totalBatches);
             }
         }
-        logger.info("Summarized TOC entries");
+
+        logger.info("Completed generating summaries for all TOC entries");
     }
 
     public void generateQuestions() {
@@ -148,28 +213,92 @@ public class TOCService {
     public void generateQuestions(boolean overwrite) {
         logger.info("Generating questions for TOC entries");
         List<TOCData> tocDataList = tocDataRepository.findAll();
-        for (TOCData tocData : tocDataList) {
-            boolean isUtterancesPopulated = tocData.getConcatenatedUtterances() != null && !tocData.getConcatenatedUtterances().isBlank();
-            boolean shouldOverwrite = overwrite || tocData.getQuestions() == null;
-            if (isUtterancesPopulated && shouldOverwrite) {
-                ChatResponse response = chatModel.call(
-                        new Prompt(List.of(
-                                new SystemMessage("""
-                                        You are a helpful assistant that is helping me predict which questions can be asked by people who are trying to
-                                        rediscover the Apollo 11 mission data. You will be given a number of utterances and you will predict the questions that
-                                        can be asked by people who are trying to rediscover the Apollo 11 mission data. You will ONLY return the questions separate by breaklines,
-                                        and nothing more. You will NEVER return more than 512 words.
-                                        """),
-                                new UserMessage(tocData.getConcatenatedUtterances())
-                        ))
-                );
 
-                var questions = Arrays.stream(response.getResult().getOutput().getText().split("\n")).filter(q -> !q.isBlank()).toList();
-                tocData.setQuestions(questions);
-                tocDataRepository.save(tocData);
-                logger.info("Generated questions for TOC entry: {}", tocData.getStartDate());
+        // Filter TOC entries that need questions generated
+        List<TOCData> tocDataToProcess = tocDataList.stream()
+                .filter(tocData -> {
+                    boolean isUtterancesPopulated = tocData.getConcatenatedUtterances() != null && !tocData.getConcatenatedUtterances().isBlank();
+                    boolean shouldOverwrite = overwrite || tocData.getQuestions() == null;
+                    return isUtterancesPopulated && shouldOverwrite;
+                })
+                .collect(Collectors.toList());
+
+        logger.info("Found {} TOC entries that need questions generated", tocDataToProcess.size());
+
+        if (tocDataToProcess.isEmpty()) {
+            logger.info("No TOC entries need questions generated");
+            return;
+        }
+
+        // Process in batches of 300
+        int batchSize = 300;
+        int totalBatches = (tocDataToProcess.size() + batchSize - 1) / batchSize; // Ceiling division
+
+        logger.info("Processing TOC entries in {} batches of up to {} entries each", totalBatches, batchSize);
+
+        // Create a virtual thread per task executor for better scalability with I/O-bound operations
+        // Virtual threads are lightweight and don't consume OS resources like platform threads
+        // This is ideal for I/O-bound tasks like API calls to OpenAI
+        try (ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor()) {
+
+            for (int batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+                int startIndex = batchIndex * batchSize;
+                int endIndex = Math.min(startIndex + batchSize, tocDataToProcess.size());
+                List<TOCData> currentBatch = tocDataToProcess.subList(startIndex, endIndex);
+
+                logger.info("Processing batch {} of {} ({} entries)", batchIndex + 1, totalBatches, currentBatch.size());
+
+                // Process each batch asynchronously
+                List<CompletableFuture<TOCData>> futures = currentBatch.stream()
+                        .map(tocData -> CompletableFuture.supplyAsync(() -> {
+                            try {
+                                logger.info("Generating questions for TOC entry: {}", tocData.getStartDate());
+
+                                ChatResponse response = chatModel.call(
+                                        new Prompt(List.of(
+                                                new SystemMessage("""
+                                                        You are a helpful assistant that is helping me predict which questions can be asked by people who are trying to
+                                                        rediscover the Apollo 11 mission data. You will be given a number of utterances and you will predict the questions that
+                                                        can be asked by people who are trying to rediscover the Apollo 11 mission data. You will ONLY return the questions separate by breaklines,
+                                                        and nothing more. You will NEVER return more than 512 words.
+                                                        """),
+                                                new UserMessage(tocData.getConcatenatedUtterances())
+                                        ))
+                                );
+
+                                var questions = Arrays.stream(response.getResult().getOutput().getText().split("\n"))
+                                        .filter(q -> !q.isBlank())
+                                        .toList();
+
+                                tocData.setQuestions(questions);
+                                logger.info("Successfully generated {} questions for TOC entry: {}", questions.size(), tocData.getStartDate());
+                                return tocData;
+                            } catch (Exception e) {
+                                logger.error("Error generating questions for TOC entry: {}", tocData.getStartDate(), e);
+                                return null;
+                            }
+                        }, executorService))
+                        .toList();
+
+                // Wait for all futures in the current batch to complete before processing the next batch
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+                // Collect all processed TOCData objects and filter out nulls (from failed futures)
+                List<TOCData> processedBatch = futures.stream()
+                        .map(CompletableFuture::join)
+                        .filter(Objects::nonNull)
+                        .toList();
+
+                // Save all processed TOCData objects in batch
+                if (!processedBatch.isEmpty()) {
+                    tocDataRepository.saveAll(processedBatch);
+                    logger.info("Saved {} TOC entries in batch", processedBatch.size());
+                }
+
+                logger.info("Completed batch {} of {}", batchIndex + 1, totalBatches);
             }
         }
-        logger.info("Generated questions for TOC entries");
+
+        logger.info("Completed generating questions for all TOC entries");
     }
 }

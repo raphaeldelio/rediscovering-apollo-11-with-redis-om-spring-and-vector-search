@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -32,6 +33,7 @@ public class UtteranceQuestionsService {
         List<TOCData> tocDataList = tocDataRepository.findAll();
 
         // Iterate through each TOC entry
+        List<UtteranceQuestions> toSaveList = new ArrayList<>();
         for (TOCData currentTOC : tocDataList) {
             boolean areUtterancesAndQuestionsPresent = currentTOC.getConcatenatedUtterances() != null && currentTOC.getQuestions() != null;
             if (areUtterancesAndQuestionsPresent) {
@@ -39,22 +41,18 @@ public class UtteranceQuestionsService {
                 for (String question : currentTOC.getQuestions()) {
                     var id = currentTOC.getStartDate() + "-" + count++;
                     if (utteranceQuestionsRepository.findById(id).isEmpty() || overwrite) {
-                        var grouped = UtteranceQuestions.of(
+                        var utteranceQuestion = UtteranceQuestions.of(
                                 id,
                                 currentTOC.getConcatenatedUtterances(),
                                 currentTOC.getUtterances(),
                                 question
                         );
-                        try {
-                            utteranceQuestionsRepository.save(grouped);
-                            logger.info("Utterance question saved: {}", id);
-                        } catch (Exception e) {
-                            logger.error("Error saving utterance question: {}", id, e);
-                        }
+                        toSaveList.add(utteranceQuestion);
                     }
                 }
             }
         }
-        logger.info("Grouping complete");
+        utteranceQuestionsRepository.saveAll(toSaveList);
+        logger.info("Utterance questions created successfully");
     }
 }
