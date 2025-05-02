@@ -59,6 +59,11 @@ button:hover {
     background-color: #b22222;
 }
 
+.toggle-btn.active {
+    background-color: #8a1a1a;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) inset;
+}
+
 .container {
     flex-grow: 1;
     display: flex;

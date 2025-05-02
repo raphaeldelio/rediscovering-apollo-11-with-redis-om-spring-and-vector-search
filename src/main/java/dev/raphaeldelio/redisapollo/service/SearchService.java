@@ -45,8 +45,8 @@ public class SearchService {
 
     public List<Map<String, String>> searchByText(String query) {
         logger.info("Received text: {}", query);
+        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), Utterance$.TEXT).getFirst();
 
-        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), Utterance$.TEXT).get(0);
         SearchStream<Utterance> stream = entityStream.of(Utterance.class);
         List<Pair<Utterance, Double>> textsAndScores = stream
                 .filter(Utterance$.EMBEDDED_TEXT.knn(3, embedding))
@@ -68,7 +68,8 @@ public class SearchService {
     public List<Pair<UtteranceSummaries, Double>> searchBySummary(String query) {
         logger.info("Received question: {}", query);
 
-        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), UtteranceSummaries$.SUMMARY).get(0);
+        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), UtteranceSummaries$.SUMMARY).getFirst();
+
         SearchStream<UtteranceSummaries> stream = entityStream.of(UtteranceSummaries.class);
         return stream.filter(UtteranceSummaries$.EMBEDDED_SUMMARY.knn(3, embedding))
                 .sorted(UtteranceSummaries$._EMBEDDED_SUMMARY_SCORE)
@@ -79,7 +80,8 @@ public class SearchService {
     public List<Pair<UtteranceQuestions, Double>> searchByQuestion(String query) {
         logger.info("Received question: {}", query);
 
-        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), UtteranceQuestions$.QUESTION).get(0);
+        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), UtteranceQuestions$.QUESTION).getFirst();
+
         SearchStream<UtteranceQuestions> stream = entityStream.of(UtteranceQuestions.class);
         return stream.filter(UtteranceQuestions$.EMBEDDED_QUESTION.knn(3, embedding))
                 .sorted(UtteranceQuestions$._EMBEDDED_QUESTION_SCORE)
@@ -158,7 +160,7 @@ public class SearchService {
     public List<Map<String, String>> searchByImageText(String query) {
         logger.info("Received query: {}", query);
 
-        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), Photograph$.DESCRIPTION).get(0);
+        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), Photograph$.DESCRIPTION).getFirst();
         SearchStream<Photograph> stream = entityStream.of(Photograph.class);
         List<Pair<Photograph, Double>> photographsAndScores = stream
                 .filter(Photograph$.EMBEDDED_DESCRIPTION.knn(3, embedding))
@@ -182,10 +184,10 @@ public class SearchService {
     }
 
     public List<Pair<SearchSemanticCache, Double>> getCacheResponse(String query, boolean isQuestion) {
-        float[] embedding = embedder.getTextEmbeddingsAsFloats(List.of(query), SearchSemanticCache$.QUERY).get(0);
+        float[] embedding = embedder.getTextEmbeddingsAsFloats(List.of(query), SearchSemanticCache$.QUERY).getFirst();
         SearchStream<SearchSemanticCache> stream = entityStream.of(SearchSemanticCache.class);
         return stream
-                .filter(SearchSemanticCache$.EMBEDDED_QUERY.knn(3, embedding))
+                .filter(SearchSemanticCache$.EMBEDDED_QUERY.knn(1, embedding))
                 .filter(SearchSemanticCache$.IS_QUESTION.eq(isQuestion))
                 .sorted(SearchSemanticCache$._EMBEDDED_QUERY_SCORE)
                 .map(Fields.of(SearchSemanticCache$._THIS, SearchSemanticCache$._EMBEDDED_QUERY_SCORE))
@@ -201,5 +203,8 @@ public class SearchService {
         searchSemanticCacheRepository.save(cache);
     }
 
-
+    public void clearCache() {
+        searchSemanticCacheRepository.deleteAll();
+        logger.info("Cache cleared");
+    }
 }
