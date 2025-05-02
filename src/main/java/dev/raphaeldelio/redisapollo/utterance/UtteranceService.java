@@ -45,10 +45,13 @@ public class UtteranceService {
         logger.info("Utterance data loaded successfully");
     }
 
-    public List<UtteranceSearchResult> search(String query) {
-        logger.info("Received utterance: {}", query);
-        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), Utterance$.TEXT).getFirst();
+    public byte[] embedUtterance(String text) {
+        logger.info("Creating utterance embedding for text: {}", text);
+        return embedder.getTextEmbeddingsAsBytes(List.of(text), Utterance$.TEXT).getFirst();
+    }
 
+    public List<UtteranceSearchResult> search(byte[] embedding) {
+        logger.info("Received utterance: {}", embedding);
         SearchStream<Utterance> stream = entityStream.of(Utterance.class);
         List<Pair<Utterance, Double>> textsAndScores = stream
                 .filter(Utterance$.EMBEDDED_TEXT.knn(3, embedding))

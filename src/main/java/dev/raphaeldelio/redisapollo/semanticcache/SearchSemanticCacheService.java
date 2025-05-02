@@ -4,7 +4,6 @@ import com.redis.om.spring.search.stream.EntityStream;
 import com.redis.om.spring.search.stream.SearchStream;
 import com.redis.om.spring.tuple.Fields;
 import com.redis.om.spring.tuple.Pair;
-import com.redis.om.spring.vectorize.Embedder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -18,17 +17,14 @@ public class SearchSemanticCacheService {
 
     private static final Logger logger = LoggerFactory.getLogger(SearchSemanticCacheService.class);
     private final EntityStream entityStream;
-    private final Embedder embedder;
     private final SearchSemanticCacheRepository searchSemanticCacheRepository;
 
-    public SearchSemanticCacheService(EntityStream entityStream, Embedder embedder,SearchSemanticCacheRepository searchSemanticCacheRepository) {
+    public SearchSemanticCacheService(EntityStream entityStream, SearchSemanticCacheRepository searchSemanticCacheRepository) {
         this.entityStream = entityStream;
-        this.embedder = embedder;
         this.searchSemanticCacheRepository = searchSemanticCacheRepository;
     }
 
-    public List<Pair<SearchSemanticCache, Double>> getCacheResponse(String query, boolean isQuestion) {
-        float[] embedding = embedder.getTextEmbeddingsAsFloats(List.of(query), SearchSemanticCache$.QUERY).getFirst();
+    public List<Pair<SearchSemanticCache, Double>> getCacheResponse(byte[] embedding, boolean isQuestion) {
         SearchStream<SearchSemanticCache> stream = entityStream.of(SearchSemanticCache.class);
         return stream
                 .filter(SearchSemanticCache$.EMBEDDED_QUERY.knn(1, embedding))

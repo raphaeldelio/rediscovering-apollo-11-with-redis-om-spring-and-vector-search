@@ -61,10 +61,12 @@ public class SummaryService {
         logger.info("Utterance summaries embedded");
     }
 
-
-    public List<SummarySearchResult> searchBySummary(String query) {
+    public byte[] embedQuery(String query) {
         logger.info("Received question: {}", query);
-        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), Summary$.SUMMARY).getFirst();
+        return embedder.getTextEmbeddingsAsBytes(List.of(query), Summary$.SUMMARY).getFirst();
+    }
+
+    public List<SummarySearchResult> searchBySummary(byte[] embedding) {
         SearchStream<Summary> stream = entityStream.of(Summary.class);
         List<Pair<Summary, Double>> summaries = stream.filter(Summary$.EMBEDDED_SUMMARY.knn(3, embedding))
                 .sorted(Summary$._EMBEDDED_SUMMARY_SCORE)

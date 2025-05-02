@@ -21,12 +21,19 @@ public class UtteranceController {
     @PostMapping("/search")
     public Map<String, Object> searchByText(@RequestBody SearchRequest request) {
         long start = System.currentTimeMillis();
-        List<UtteranceSearchResult> matches = utteranceService.search(request.query());
-            return Map.of(
-                    "query", request.query(),
-                    "matchedTexts", matches,
-                    "processingTime", (System.currentTimeMillis() - start) + "ms"
-            );
+        byte[] embedding = utteranceService.embedUtterance(request.query());
+        long embeddingTime = System.currentTimeMillis() - start;
+
+        start = System.currentTimeMillis();
+        List<UtteranceSearchResult> matches = utteranceService.search(embedding);
+        long searchTime = System.currentTimeMillis() - start;
+
+        return Map.of(
+                "query", request.query(),
+                "matchedTexts", matches,
+                "embeddingTime", embeddingTime + "ms",
+                "searchTime", searchTime + "ms"
+        );
     }
 
     // ---------- DTOs ----------

@@ -63,11 +63,13 @@ public class QuestionService {
         logger.info("Embedding questions created successfully");
     }
 
-    public List<QuestionSearchResult> searchByQuestion(String query) {
+    public byte[] embedQuery(String query) {
         logger.info("Received question: {}", query);
-        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), Question$.QUESTION).getFirst();
-        SearchStream<Question> stream = entityStream.of(Question.class);
+        return embedder.getTextEmbeddingsAsBytes(List.of(query), Question$.QUESTION).getFirst();
+    }
 
+    public List<QuestionSearchResult> searchByQuestion(byte[] embedding) {
+        SearchStream<Question> stream = entityStream.of(Question.class);
         return stream.filter(Question$.EMBEDDED_QUESTION.knn(3, embedding))
                 .sorted(Question$._EMBEDDED_QUESTION_SCORE)
                 .map(Fields.of(Question$._THIS, Question$._EMBEDDED_QUESTION_SCORE))

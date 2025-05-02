@@ -50,14 +50,20 @@ public class ImageService {
         }
     }
 
-    public List<ImageSearchResult> searchByImage(String tmpImagePath) {
+    public Photograph embedImage(String tmpImagePath) {
         Photograph tmpPhoto = new Photograph("tmp", "tmp", null, null, null);
         tmpPhoto.setImagePath(tmpImagePath);
-        tmpPhoto = photographsRepository.save(tmpPhoto);
+        return photographsRepository.save(tmpPhoto);
+    }
 
+    public byte[] embedDescription(String description) {
+        return embedder.getTextEmbeddingsAsBytes(List.of(description), Photograph$.DESCRIPTION).getFirst();
+    }
+
+    public List<ImageSearchResult> searchByImage(byte[] imageEmbedding) {
         SearchStream<Photograph> stream = entityStream.of(Photograph.class);
         List<Pair<Photograph, Double>> photographsAndScores = stream
-                .filter(Photograph$.EMBEDDED_IMAGE.knn(20, tmpPhoto.getEmbeddedImage()))
+                .filter(Photograph$.EMBEDDED_IMAGE.knn(20, imageEmbedding))
                 .sorted(Photograph$._EMBEDDED_IMAGE_SCORE)
                 .map(Fields.of(Photograph$._THIS, Photograph$._EMBEDDED_IMAGE_SCORE))
                 .collect(Collectors.toList());
@@ -71,12 +77,10 @@ public class ImageService {
                 .toList();
     }
 
-    public List<ImageSearchResult> searchByImageText(String query) {
-        logger.info("Received query: {}", query);
-        byte[] embedding = embedder.getTextEmbeddingsAsBytes(List.of(query), Photograph$.DESCRIPTION).getFirst();
+    public List<ImageSearchResult> searchByImageText(byte[] descriptionEmbedding) {
         SearchStream<Photograph> stream = entityStream.of(Photograph.class);
         List<Pair<Photograph, Double>> photographsAndScores = stream
-                .filter(Photograph$.EMBEDDED_DESCRIPTION.knn(3, embedding))
+                .filter(Photograph$.EMBEDDED_DESCRIPTION.knn(3, descriptionEmbedding))
                 .sorted(Photograph$._EMBEDDED_DESCRIPTION_SCORE)
                 .map(Fields.of(Photograph$._THIS, Photograph$._EMBEDDED_DESCRIPTION_SCORE))
                 .collect(Collectors.toList());

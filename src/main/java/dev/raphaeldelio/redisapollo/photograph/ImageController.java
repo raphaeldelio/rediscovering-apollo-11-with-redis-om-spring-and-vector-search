@@ -19,22 +19,39 @@ public class ImageController {
 
     @PostMapping("/search/by-image")
     public Map<String, Object> searchByImage(@RequestBody ImageSearchRequest request) {
-        long start = System.currentTimeMillis();
         String tmpPath = imageService.saveTmpImage(request.imageBase64(), request.imagePath());
+
+        long start = System.currentTimeMillis();
+        Photograph tmpPhoto = imageService.embedImage(tmpPath);
+        long embeddingTime = System.currentTimeMillis() - start;
+
+        start = System.currentTimeMillis();
+        var matchedPhotographs = imageService.searchByImage(tmpPhoto.getEmbeddedImage());
+        long searchTime = System.currentTimeMillis() - start;
+
         return Map.of(
                 "imagePath", tmpPath,
-                "matchedPhotographs", imageService.searchByImage(tmpPath),
-                "processingTime", (System.currentTimeMillis() - start) + "ms"
+                "matchedPhotographs", matchedPhotographs,
+                "embeddingTime", embeddingTime + "ms",
+                "searchTime", searchTime + "ms"
         );
     }
 
     @PostMapping("/search/by-description")
     public Map<String, Object> searchByImageText(@RequestBody SearchRequest request) {
         long start = System.currentTimeMillis();
+        byte[] embedding = imageService.embedDescription(request.query());
+        long embeddingTime = System.currentTimeMillis() - start;
+
+        start = System.currentTimeMillis();
+        var matchedPhotographs = imageService.searchByImageText(embedding);
+        long searchTime = System.currentTimeMillis() - start;
+
         return Map.of(
                 "query", request.query(),
-                "matchedPhotographs", imageService.searchByImageText(request.query()),
-                "processingTime", (System.currentTimeMillis() - start) + "ms"
+                "matchedPhotographs", matchedPhotographs,
+                "embeddingTime", embeddingTime + "ms",
+                "searchTime", searchTime + "ms"
         );
     }
 

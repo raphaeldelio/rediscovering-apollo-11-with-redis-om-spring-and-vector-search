@@ -208,9 +208,13 @@ function sendQuery(query, imageBase64) {
 
         // Render text-based response if enabled
         if (textData) {
-            let textsHtml = `
-                <p><strong>Processing time:</strong> ${textData.processingTime}</p>
-                <p><strong>Q:</strong> ${textData.query}</p>`;
+            let textsHtml = `<p><strong>Embedding time:</strong> ${textData.embeddingTime}</p>`
+
+            if (textData.searchTime) {
+                textsHtml += `<p><strong>Search time:</strong> ${textData.searchTime}</p>`;
+            }
+
+            textsHtml += `<p><strong>Q:</strong> ${textData.query}</p>`;
 
             if (textData.matchedTexts && textData.matchedTexts.length > 0) {
                 textsHtml += `<h4>Matched Texts:</h4><ul>`;
@@ -227,8 +231,21 @@ function sendQuery(query, imageBase64) {
 
         // Render question-based response if enabled
         if (questionData) {
-            let questionsHTML = `<p><strong>Processing time:</strong> ${questionData.processingTime}</p>
-                <p><strong>Q:</strong> ${questionData.query}</p>`;
+            let questionsHTML = `<p><strong>Embedding time:</strong> ${questionData.embeddingTime}</p>`
+
+            if (questionData.ragTime) {
+                questionsHTML += `<p><strong>RAG time:</strong> ${questionData.ragTime}</p>`;
+            }
+
+            if (questionData.searchTime) {
+                questionsHTML += `<p><strong>Search time:</strong> ${questionData.searchTime}</p>`;
+            }
+
+            if (questionData.cacheSearchTime) {
+                questionsHTML += `<p><strong>Cache Search time:</strong> ${questionData.cacheSearchTime}</p>`;
+            }
+
+            questionsHTML += `<p><strong>Q:</strong> ${questionData.query}</p>`;
 
             if (isToggleEnabled('rag')) {
                 questionsHTML += `<p><strong>A:</strong> ${questionData.ragAnswer}</p>`;
@@ -263,9 +280,21 @@ function sendQuery(query, imageBase64) {
 
         // Render summary-based response if enabled
         if (summaryData) {
-            let summariesHTML = `
-                    <p><strong>Processing time:</strong> ${summaryData.processingTime}</p>
-                    <p><strong>Q:</strong> ${summaryData.query}</p>`;
+            let summariesHTML = `<p><strong>Embedding time:</strong> ${summaryData.embeddingTime}</p>`
+
+            if (summaryData.ragTime) {
+                summariesHTML += `<p><strong>RAG time:</strong> ${summaryData.ragTime}</p>`;
+            }
+
+            if (summaryData.searchTime) {
+                summariesHTML += `<p><strong>Search time:</strong> ${summaryData.searchTime}</p>`;
+            }
+
+            if (summaryData.cacheSearchTime) {
+                summariesHTML += `<p><strong>Cache Search time:</strong> ${summaryData.cacheSearchTime}</p>`;
+            }
+
+            summariesHTML += `<p><strong>Q:</strong> ${summaryData.query}</p>`;
 
             if (isToggleEnabled('rag')) {
                 summariesHTML += `
@@ -301,8 +330,13 @@ function sendQuery(query, imageBase64) {
 
         // Render image-based response if enabled
         if (imageData) {
-            let imagesHTML = `<p><strong>Processing time:</strong> ${imageData.processingTime}</p>
-                    <h4>Matched Images:</h4><ul>`;
+            let imagesHTML = `<p><strong>Embedding time:</strong> ${imageData.embeddingTime}</p>`
+
+            if (imageData.searchTime) {
+                imagesHTML += `<p><strong>Search time:</strong> ${imageData.searchTime}</p>`;
+            }
+
+            imagesHTML += `<h4>Matched Images:</h4><ul>`;
 
             if (imageData.matchedPhotographs && imageData.matchedPhotographs.length > 0) {
                 imagesHTML += imageData.matchedPhotographs.map(img => `
@@ -323,8 +357,13 @@ function sendQuery(query, imageBase64) {
 
         // Render image-text-based response if enabled
         if (imageTextData) {
-            let imagesTextHTML = `<p><strong>Processing time:</strong> ${imageTextData.processingTime}</p>
-                <p><strong>Q:</strong> ${imageTextData.query}</p><h4>Matched Images:</h4><ul>`;
+            let imagesTextHTML = `<p><strong>Embedding time:</strong> ${imageTextData.embeddingTime}</p>`
+
+            if (imageData.searchTime) {
+                imagesTextHTML += `<p><strong>Search time:</strong> ${imageTextData.searchTime}</p>`;
+            }
+
+            imagesTextHTML += `<p><strong>Q:</strong> ${imageTextData.query}</p><h4>Matched Images:</h4><ul>`;
 
             if (imageTextData.matchedPhotographs && imageTextData.matchedPhotographs.length > 0) {
                 imagesTextHTML += imageTextData.matchedPhotographs.map(img => `

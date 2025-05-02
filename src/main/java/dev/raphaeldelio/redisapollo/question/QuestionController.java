@@ -32,12 +32,19 @@ public class QuestionController {
     @PostMapping("/search/")
     public Map<String, Object> searchByQuestion(@RequestBody SearchRequest request) {
         long start = System.currentTimeMillis();
+
+        byte[] embedding = questionService.embedQuery(request.query());
+
+        long embeddingTime = System.currentTimeMillis() - start;
+
         if (request.enableSemanticCache()) {
+            start = System.currentTimeMillis();
             Optional<Pair<SearchSemanticCache, Double>> cached = searchSemanticCacheService
-                    .getCacheResponse(request.query(), true)
+                    .getCacheResponse(embedding, true)
                     .stream()
                     .filter(pair -> pair.getSecond() < 0.1)
                     .findFirst();
+            long cacheSearchTime = System.currentTimeMillis() - start;
 
             if (cached.isPresent()) {
                 var hit = cached.get();
@@ -47,12 +54,15 @@ public class QuestionController {
                         "cachedQuery", hit.getFirst().getQuery(),
                         "cachedScore", hit.getSecond(),
                         "matchedQuestions", "",
-                        "processingTime", (System.currentTimeMillis() - start) + "ms"
+                        "embeddingTime", embeddingTime + "ms",
+                        "cacheSearchTime", cacheSearchTime + "ms"
                 );
             }
         }
 
-        var results = questionService.searchByQuestion(request.query());
+        start = System.currentTimeMillis();
+        var results = questionService.searchByQuestion(embedding);
+        long searchTime = System.currentTimeMillis() - start;
 
         List<Map<String, String>> mapped = results.stream()
                 .map(result -> Map.of(
@@ -66,7 +76,9 @@ public class QuestionController {
                     .map(result -> result.question().getUtterancesConcatenated())
                     .collect(Collectors.joining("\n"));
 
+            start = System.currentTimeMillis();
             String answer = ragService.enhanceWithRag(request.query(), context);
+            long ragTime = System.currentTimeMillis() - start;
 
             if (request.enableSemanticCache()) {
                 searchSemanticCacheService.cacheResponse(request.query(), answer, true);
@@ -76,14 +88,17 @@ public class QuestionController {
                     "query", request.query(),
                     "ragAnswer", answer,
                     "matchedQuestions", mapped,
-                    "processingTime", (System.currentTimeMillis() - start) + "ms"
+                    "embeddingTime", embeddingTime + "ms",
+                    "ragTime", ragTime + "ms",
+                    "searchTime", searchTime + "ms"
             );
         }
 
         return Map.of(
                 "query", request.query(),
                 "matchedQuestions", mapped,
-                "processingTime", (System.currentTimeMillis() - start) + "ms"
+                "embeddingTime", embeddingTime + "ms",
+                "searchTime", searchTime + "ms"
         );
     }
 
