@@ -131,7 +131,7 @@ function sendQuery(query, imageBase64) {
     // Only send requests for enabled search types
     if (isToggleEnabled('texts-response-column')) {
         fetchPromises.push(
-            fetch("/search-by-text", {
+            fetch("/utterance/search", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "HX-Request": "true" },
                 body: JSON.stringify(requestBody)
@@ -148,7 +148,7 @@ function sendQuery(query, imageBase64) {
         questionRequestBody.enableSemanticCache = isToggleEnabled('semantic-cache');
 
         fetchPromises.push(
-            fetch("/search-by-question", {
+            fetch("/question/search/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "HX-Request": "true" },
                 body: JSON.stringify(questionRequestBody)
@@ -165,7 +165,7 @@ function sendQuery(query, imageBase64) {
         summaryRequestBody.enableSemanticCache = isToggleEnabled('semantic-cache');
 
         fetchPromises.push(
-            fetch("/search-by-summary", {
+            fetch("/summary/search", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "HX-Request": "true" },
                 body: JSON.stringify(summaryRequestBody)
@@ -177,7 +177,7 @@ function sendQuery(query, imageBase64) {
 
     if (isToggleEnabled('images-text-response-column')) {
         fetchPromises.push(
-            fetch("/search-by-image-text", {
+            fetch("/image/search/by-description", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "HX-Request": "true" },
                 body: JSON.stringify(requestBody)
@@ -189,7 +189,7 @@ function sendQuery(query, imageBase64) {
 
     if (isToggleEnabled('images-response-column')) {
         fetchPromises.push(
-            fetch("/search-by-image", {
+            fetch("/image/search/by-image", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "HX-Request": "true" },
                 body: JSON.stringify(requestBody)
@@ -216,7 +216,7 @@ function sendQuery(query, imageBase64) {
                 textsHtml += `<h4>Matched Texts:</h4><ul>`;
                 textsHtml += textData.matchedTexts.map(q => `
                     <li>
-                       ${q.text} (Score: ${parseFloat(q.score).toFixed(2)})
+                       ${q.utterance} (Score: ${parseFloat(q.score).toFixed(2)})
                     </li>
                     `).join("");
                 textsHtml += `</ul>`;
