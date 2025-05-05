@@ -31,7 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
-/redis-apollo-app-java/src/main/resources/static/images/apollo11/
 /redis-apollo-app-java/src/main/resources/static/images/apollo11
 redis-apollo-app-java/src/main/resources/static/.DS_Store
 redis-apollo-app-java/src/main/resources/static/images/.DS_Store
+/redis-apollo-app-kotlin/src/main/resources/static/images/apollo11
+/.gradle/
+/redis-apollo-app-java/.gradle/

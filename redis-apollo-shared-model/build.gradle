@@ -1,0 +1,36 @@
+plugins {
+	id 'java'
+}
+
+group = 'dev.raphaeldelio'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+	maven { url = uri("https://repo.spring.io/milestone") }
+	maven { url = uri("https://repo.spring.io/snapshot") }
+}
+
+dependencies {
+	implementation 'com.redis.om:redis-om-spring:0.9.12-SNAPSHOT'
+
+	implementation 'org.springframework.ai:spring-ai-openai:1.0.0-M6'
+	implementation 'org.springframework.ai:spring-ai-ollama:1.0.0-M6'
+	implementation 'org.springframework.ai:spring-ai-azure-openai:1.0.0-M6'
+	implementation 'org.springframework.ai:spring-ai-vertex-ai-embedding:1.0.0-M6'
+	implementation 'org.springframework.ai:spring-ai-bedrock:1.0.0-M6'
+	implementation 'org.springframework.ai:spring-ai-transformers:1.0.0-M6'
+
+	annotationProcessor 'com.redis.om:redis-om-spring:0.9.12-SNAPSHOT'
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.compilerArgs << "-parameters"
+}
