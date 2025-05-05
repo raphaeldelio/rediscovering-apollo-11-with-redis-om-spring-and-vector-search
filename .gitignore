@@ -31,7 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
-/src/main/resources/static/images/apollo11/
-/src/main/resources/static/images/apollo11
-src/main/resources/static/.DS_Store
-src/main/resources/static/images/.DS_Store
+/redis-apollo-app-java/src/main/resources/static/images/apollo11/
+/redis-apollo-app-java/src/main/resources/static/images/apollo11
+redis-apollo-app-java/src/main/resources/static/.DS_Store
+redis-apollo-app-java/src/main/resources/static/images/.DS_Store
