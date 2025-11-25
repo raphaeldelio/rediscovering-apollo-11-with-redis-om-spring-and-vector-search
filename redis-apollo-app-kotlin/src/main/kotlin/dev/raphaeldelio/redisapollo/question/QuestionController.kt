@@ -14,7 +14,7 @@ class QuestionController(
     @PostMapping("/search/")
     fun searchByQuestion(
         @RequestBody request: SearchRequest
-    ): Map<String, Any> {
+    ): SearchResponse {
         var start = System.currentTimeMillis()
         val embedding = questionService.embedQuery(request.query)
         val embeddingTime = System.currentTimeMillis() - start
@@ -25,14 +25,14 @@ class QuestionController(
             val cacheSearchTime = System.currentTimeMillis() - start
 
             if (cached.isPresent) {
-                return mapOf(
-                    "query" to request.query,
-                    "ragAnswer" to cached.get().response,
-                    "cachedQuery" to cached.get().prompt,
-                    "cachedScore" to cached.get().distance,
-                    "matchedQuestions" to "",
-                    "embeddingTime" to "${embeddingTime}ms",
-                    "cacheSearchTime" to "${cacheSearchTime}ms"
+                val c = cached.get()
+                return CachedResponse(
+                    query = request.query,
+                    ragAnswer = c.response,
+                    cachedQuery = c.prompt,
+                    cachedScore = c.distance,
+                    embeddingTime = embeddingTime,
+                    cacheSearchTime = cacheSearchTime
                 )
             }
         }
@@ -41,11 +41,11 @@ class QuestionController(
         val results = questionService.searchByQuestion(embedding)
         val searchTime = System.currentTimeMillis() - start
 
-        val mapped = results.map {
-            mapOf(
-                "question" to it.question.question,
-                "utterances" to formatUtterances(it.question.utterances),
-                "score" to it.score.toString()
+        val matched = results.map {
+            MatchedQuestion(
+                question = it.question.question,
+                utterances = formatUtterances(it.question.utterances),
+                score = it.score
             )
         }
 
@@ -60,21 +60,21 @@ class QuestionController(
                 questionService.cacheResponse(request.query, answer, true)
             }
 
-            return mapOf(
-                "query" to request.query,
-                "ragAnswer" to answer,
-                "matchedQuestions" to mapped,
-                "embeddingTime" to "${embeddingTime}ms",
-                "ragTime" to "${ragTime}ms",
-                "searchTime" to "${searchTime}ms"
+            return RagResponse(
+                query = request.query,
+                ragAnswer = answer,
+                matchedQuestions = matched,
+                embeddingTime = embeddingTime,
+                searchTime = searchTime,
+                ragTime = ragTime
             )
         }
 
-        return mapOf(
-            "query" to request.query,
-            "matchedQuestions" to mapped,
-            "embeddingTime" to "${embeddingTime}ms",
-            "searchTime" to "${searchTime}ms"
+        return SearchOnlyResponse(
+            query = request.query,
+            matchedQuestions = matched,
+            embeddingTime = embeddingTime,
+            searchTime = searchTime
         )
     }
 
@@ -88,4 +88,42 @@ class QuestionController(
         val enableSemanticCache: Boolean,
         val enableRag: Boolean
     )
+
+    data class MatchedQuestion(
+        val question: String,
+        val utterances: String,
+        val score: Double
+    )
+
+    open class SearchResponse(
+        open val query: String,
+        open val embeddingTime: Long,
+        open val searchTime: Long? = null,
+        open val ragTime: Long? = null
+    )
+
+    data class CachedResponse(
+        val ragAnswer: String,
+        val cachedQuery: String,
+        val cachedScore: Float,
+        val cacheSearchTime: Long,
+        override val query: String,
+        override val embeddingTime: Long
+    ) : SearchResponse(query, embeddingTime)
+
+    data class RagResponse(
+        val ragAnswer: String,
+        val matchedQuestions: List<MatchedQuestion>,
+        override val query: String,
+        override val embeddingTime: Long,
+        override val searchTime: Long,
+        override val ragTime: Long
+    ) : SearchResponse(query, embeddingTime, searchTime, ragTime)
+
+    data class SearchOnlyResponse(
+        override val query: String,
+        val matchedQuestions: List<MatchedQuestion>,
+        override val embeddingTime: Long,
+        override val searchTime: Long
+    ) : SearchResponse(query, embeddingTime, searchTime)
 }

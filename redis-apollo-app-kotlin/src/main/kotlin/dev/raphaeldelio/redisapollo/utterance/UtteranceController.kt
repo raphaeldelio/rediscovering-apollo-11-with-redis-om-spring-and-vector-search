@@ -9,7 +9,7 @@ class UtteranceController(
 ) {
 
     @PostMapping("/search")
-    fun searchByText(@RequestBody request: SearchRequest): Map<String, Any> {
+    fun searchByText(@RequestBody request: SearchRequest): UtteranceSearchResponse {
         var start = System.currentTimeMillis()
         val embedding = utteranceService.embedUtterance(request.query)
         val embeddingTime = System.currentTimeMillis() - start
@@ -18,11 +18,11 @@ class UtteranceController(
         val matches = utteranceService.search(embedding)
         val searchTime = System.currentTimeMillis() - start
 
-        return mapOf(
-            "query" to request.query,
-            "matchedTexts" to matches,
-            "embeddingTime" to "${embeddingTime}ms",
-            "searchTime" to "${searchTime}ms"
+        return UtteranceSearchResponse(
+            query = request.query,
+            matchedTexts = matches,
+            embeddingTime = embeddingTime,
+            searchTime = searchTime
         )
     }
 
@@ -30,5 +30,12 @@ class UtteranceController(
         val query: String,
         val enableSemanticCache: Boolean,
         val enableRag: Boolean
+    )
+
+    data class UtteranceSearchResponse(
+        val query: String,
+        val matchedTexts: List<UtteranceSearchResult>,
+        val embeddingTime: Long,
+        val searchTime: Long
     )
 }

@@ -12,7 +12,7 @@ class SummaryController(
 ) {
 
     @PostMapping("/search")
-    fun search(@RequestBody request: SearchRequest): Map<String, Any> {
+    fun search(@RequestBody request: SearchRequest): SummaryResponse {
         var start = System.currentTimeMillis()
         val embedding = summaryService.embedQuery(request.query)
         val embeddingTime = System.currentTimeMillis() - start
@@ -24,14 +24,13 @@ class SummaryController(
 
             if (cached.isPresent) {
                 val hit = cached.get()
-                return mapOf(
-                    "query" to request.query,
-                    "ragAnswer" to hit.response,
-                    "cachedQuery" to hit.prompt,
-                    "cachedScore" to hit.distance,
-                    "matchedSummaries" to "",
-                    "embeddingTime" to "${embeddingTime}ms",
-                    "cacheSearchTime" to "${cacheSearchTime}ms"
+                return CachedSummaryResponse(
+                    query = request.query,
+                    ragAnswer = hit.response,
+                    cachedQuery = hit.prompt,
+                    cachedScore = hit.distance,
+                    cacheSearchTime = cacheSearchTime,
+                    embeddingTime = embeddingTime
                 )
             }
         }
@@ -40,11 +39,11 @@ class SummaryController(
         val results = summaryService.searchBySummary(embedding)
         val searchTime = System.currentTimeMillis() - start
 
-        val mapped = results.map { result ->
-            mapOf(
-                "summary" to result.summary.summary,
-                "utterances" to formatUtterances(result.summary.utterances),
-                "score" to result.score.toString()
+        val matched = results.map {
+            MatchedSummary(
+                summary = it.summary.summary,
+                utterances = formatUtterances(it.summary.utterances),
+                score = it.score
             )
         }
 
@@ -59,21 +58,21 @@ class SummaryController(
                 summaryService.cacheResponse(request.query, answer, false)
             }
 
-            return mapOf(
-                "query" to request.query,
-                "ragAnswer" to answer,
-                "matchedSummaries" to mapped,
-                "embeddingTime" to "${embeddingTime}ms",
-                "searchTime" to "${searchTime}ms",
-                "ragTime" to "${ragTime}ms"
+            return RagSummaryResponse(
+                query = request.query,
+                ragAnswer = answer,
+                matchedSummaries = matched,
+                embeddingTime = embeddingTime,
+                searchTime = searchTime,
+                ragTime = ragTime
             )
         }
 
-        return mapOf(
-            "query" to request.query,
-            "matchedSummaries" to mapped,
-            "embeddingTime" to "${embeddingTime}ms",
-            "searchTime" to "${searchTime}ms"
+        return SearchOnlySummaryResponse(
+            query = request.query,
+            matchedSummaries = matched,
+            embeddingTime = embeddingTime,
+            searchTime = searchTime
         )
     }
 
@@ -87,4 +86,48 @@ class SummaryController(
         val enableSemanticCache: Boolean,
         val enableRag: Boolean
     )
+
+    // -------------------- Response Models --------------------
+
+    data class MatchedSummary(
+        val summary: String,
+        val utterances: String,
+        val score: Double
+    )
+
+    /** Base response type */
+    open class SummaryResponse(
+        open val query: String,
+        open val embeddingTime: Long,
+        open val searchTime: Long? = null,
+        open val ragTime: Long? = null
+    )
+
+    /** Cache hit */
+    data class CachedSummaryResponse(
+        val ragAnswer: String,
+        val cachedQuery: String,
+        val cachedScore: Float,
+        val cacheSearchTime: Long,
+        override val query: String,
+        override val embeddingTime: Long
+    ) : SummaryResponse(query, embeddingTime)
+
+    /** RAG-enhanced result */
+    data class RagSummaryResponse(
+        override val query: String,
+        val ragAnswer: String,
+        val matchedSummaries: List<MatchedSummary>,
+        override val embeddingTime: Long,
+        override val searchTime: Long,
+        override val ragTime: Long
+    ) : SummaryResponse(query, embeddingTime, searchTime, ragTime)
+
+    /** Search-only result */
+    data class SearchOnlySummaryResponse(
+        override val query: String,
+        val matchedSummaries: List<MatchedSummary>,
+        override val embeddingTime: Long,
+        override val searchTime: Long
+    ) : SummaryResponse(query, embeddingTime, searchTime)
 }

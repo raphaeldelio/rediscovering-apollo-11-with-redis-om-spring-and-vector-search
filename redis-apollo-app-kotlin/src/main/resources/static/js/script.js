@@ -208,10 +208,10 @@ function sendQuery(query, imageBase64) {
 
         // Render text-based response if enabled
         if (textData) {
-            let textsHtml = `<p><strong>Embedding time:</strong> ${textData.embeddingTime}</p>`
+            let textsHtml = `<p><strong>Embedding time:</strong> ${textData.embeddingTime}ms</p>`
 
             if (textData.searchTime) {
-                textsHtml += `<p><strong>Search time:</strong> ${textData.searchTime}</p>`;
+                textsHtml += `<p><strong>Search time:</strong> ${textData.searchTime}ms</p>`;
             }
 
             textsHtml += `<p><strong>Q:</strong> ${textData.query}</p>`;
@@ -231,18 +231,18 @@ function sendQuery(query, imageBase64) {
 
         // Render question-based response if enabled
         if (questionData) {
-            let questionsHTML = `<p><strong>Embedding time:</strong> ${questionData.embeddingTime}</p>`
+            let questionsHTML = `<p><strong>Embedding time:</strong> ${questionData.embeddingTime}ms</p>`
 
             if (questionData.ragTime) {
-                questionsHTML += `<p><strong>RAG time:</strong> ${questionData.ragTime}</p>`;
+                questionsHTML += `<p><strong>RAG time:</strong> ${questionData.ragTime}ms</p>`;
             }
 
             if (questionData.searchTime) {
-                questionsHTML += `<p><strong>Search time:</strong> ${questionData.searchTime}</p>`;
+                questionsHTML += `<p><strong>Search time:</strong> ${questionData.searchTime}ms</p>`;
             }
 
             if (questionData.cacheSearchTime) {
-                questionsHTML += `<p><strong>Cache Search time:</strong> ${questionData.cacheSearchTime}</p>`;
+                questionsHTML += `<p><strong>Cache Search time:</strong> ${questionData.cacheSearchTime}ms</p>`;
             }
 
             questionsHTML += `<p><strong>Q:</strong> ${questionData.query}</p>`;
@@ -251,11 +251,11 @@ function sendQuery(query, imageBase64) {
                 questionsHTML += `<p><strong>A:</strong> ${questionData.ragAnswer}</p>`;
             }
 
-            if (isToggleEnabled('semantic-cache')) {
+            if (isToggleEnabled('semantic-cache') && questionData.cachedQuery !== undefined) {
                 questionsHTML += `
                     <div>
                     <p><strong>Cached Query: </strong>${questionData.cachedQuery}</p>
-                    <p><strong>Cached Score: </strong>Cached Score: ${questionData.cachedScore}</p>
+                    <p><strong>Cached Score: </strong>${questionData.cachedScore}</p>
                     </div>`;
             }
 
@@ -280,18 +280,18 @@ function sendQuery(query, imageBase64) {
 
         // Render summary-based response if enabled
         if (summaryData) {
-            let summariesHTML = `<p><strong>Embedding time:</strong> ${summaryData.embeddingTime}</p>`
+            let summariesHTML = `<p><strong>Embedding time:</strong> ${summaryData.embeddingTime}ms</p>`
 
             if (summaryData.ragTime) {
-                summariesHTML += `<p><strong>RAG time:</strong> ${summaryData.ragTime}</p>`;
+                summariesHTML += `<p><strong>RAG time:</strong> ${summaryData.ragTime}ms</p>`;
             }
 
             if (summaryData.searchTime) {
-                summariesHTML += `<p><strong>Search time:</strong> ${summaryData.searchTime}</p>`;
+                summariesHTML += `<p><strong>Search time:</strong> ${summaryData.searchTime}ms</p>`;
             }
 
             if (summaryData.cacheSearchTime) {
-                summariesHTML += `<p><strong>Cache Search time:</strong> ${summaryData.cacheSearchTime}</p>`;
+                summariesHTML += `<p><strong>Cache Search time:</strong> ${summaryData.cacheSearchTime}ms</p>`;
             }
 
             summariesHTML += `<p><strong>Q:</strong> ${summaryData.query}</p>`;
@@ -301,11 +301,11 @@ function sendQuery(query, imageBase64) {
                     <p><strong>A:</strong> ${summaryData.ragAnswer}</p>`;
             }
 
-            if (isToggleEnabled('semantic-cache')) {
+            if (isToggleEnabled('semantic-cache') && summaryData.cachedQuery !== undefined) {
                 summariesHTML += `
                     <div>
                     <p><strong>Cached Query: </strong>${summaryData.cachedQuery}</p>
-                    <p><strong>Cached Score: </strong>Cached Score: ${summaryData.cachedScore}</p>
+                    <p><strong>Cached Score: </strong>${summaryData.cachedScore}</p>
                     </div>`;
             }
 
@@ -330,10 +330,10 @@ function sendQuery(query, imageBase64) {
 
         // Render image-based response if enabled
         if (imageData) {
-            let imagesHTML = `<p><strong>Embedding time:</strong> ${imageData.embeddingTime}</p>`
+            let imagesHTML = `<p><strong>Embedding time:</strong> ${imageData.embeddingTime}ms</p>`
 
             if (imageData.searchTime) {
-                imagesHTML += `<p><strong>Search time:</strong> ${imageData.searchTime}</p>`;
+                imagesHTML += `<p><strong>Search time:</strong> ${imageData.searchTime}ms</p>`;
             }
 
             imagesHTML += `<h4>Matched Images:</h4><ul>`;
@@ -357,9 +357,9 @@ function sendQuery(query, imageBase64) {
 
         // Render image-text-based response if enabled
         if (imageTextData) {
-            let imagesTextHTML = `<p><strong>Embedding time:</strong> ${imageTextData.embeddingTime}</p>`
+            let imagesTextHTML = `<p><strong>Embedding time:</strong> ${imageTextData.embeddingTime}ms</p>`
 
-            if (imageData.searchTime) {
+            if (imageTextData.searchTime) {
                 imagesTextHTML += `<p><strong>Search time:</strong> ${imageTextData.searchTime}</p>`;
             }
 
