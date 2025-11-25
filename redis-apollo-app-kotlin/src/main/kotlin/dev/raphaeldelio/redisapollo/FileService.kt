@@ -34,14 +34,14 @@ class FileService {
         val constructors = clazz.declaredConstructors
         for (constructor in constructors) {
             val paramTypes = constructor.parameterTypes
-            if (paramTypes.size >= row.size) {
+            if (paramTypes.size == row.size) {
                 try {
-                    val args = Array<Any?>(paramTypes.size) { i ->
+                    val args = Array(paramTypes.size) { i ->
                         if (i < row.size) parseValue(row[i], paramTypes[i]) else defaultForType(paramTypes[i])
                     }
                     constructor.isAccessible = true
                     return clazz.cast(constructor.newInstance(*args))
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // Try next constructor
                 }
             }

@@ -41,8 +41,13 @@ class ImageService(
     }
 
     fun embedImage(tmpImagePath: String): Photograph {
-        val tmpPhoto = Photograph("tmp", "tmp", null, null, null).apply {
-            imagePath = tmpImagePath
+        val tmpPhoto = Photograph(
+            "tmp",
+            "tmp",
+            null,
+            null,
+            "").apply {
+                imagePath = tmpImagePath
         }
         return photographsRepository.save(tmpPhoto)
     }

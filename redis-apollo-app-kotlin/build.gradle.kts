@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "1.9.25"
     kotlin("plugin.spring") version "1.9.25"
+    kotlin("kapt") version "1.9.25"
     id("org.springframework.boot") version "3.4.1"
     id("io.spring.dependency-management") version "1.1.7"
     java
@@ -23,25 +24,24 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":redis-apollo-shared-model"))
-
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
-    implementation("com.redis.om:redis-om-spring:0.9.12-SNAPSHOT")
-    annotationProcessor("com.redis.om:redis-om-spring:0.9.12-SNAPSHOT")
+    implementation("com.redis.om:redis-om-spring:1.1.0")
+    implementation("com.redis.om:redis-om-spring-ai:1.1.0")
+    kapt("com.redis.om:redis-om-spring:1.1.0")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:3.4.1")
 
     // Spring AI
-    implementation("org.springframework.ai:spring-ai-openai:1.0.0-M6")
-    implementation("org.springframework.ai:spring-ai-ollama:1.0.0-M6")
-    implementation("org.springframework.ai:spring-ai-azure-openai:1.0.0-M6")
-    implementation("org.springframework.ai:spring-ai-vertex-ai-embedding:1.0.0-M6")
-    implementation("org.springframework.ai:spring-ai-bedrock:1.0.0-M6")
-    implementation("org.springframework.ai:spring-ai-transformers:1.0.0-M6")
+    implementation("org.springframework.ai:spring-ai-openai:1.0.0")
+    implementation("org.springframework.ai:spring-ai-ollama:1.0.0")
+    implementation("org.springframework.ai:spring-ai-azure-openai:1.0.0")
+    implementation("org.springframework.ai:spring-ai-vertex-ai-embedding:1.0.0")
+    implementation("org.springframework.ai:spring-ai-bedrock:1.0.0")
+    implementation("org.springframework.ai:spring-ai-transformers:1.0.0")
 
     implementation("jakarta.websocket:jakarta.websocket-api:2.1.1")
     implementation("jakarta.websocket:jakarta.websocket-client-api:2.1.1")

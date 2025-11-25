@@ -32,7 +32,7 @@ class SummaryService(
                 Summary(
                     toc.startDate,
                     toc.concatenatedUtterances!!,
-                    toc.utterances!!,
+                    toc.utterances ?: emptyList(),
                     toc.summary!!
                 )
             }

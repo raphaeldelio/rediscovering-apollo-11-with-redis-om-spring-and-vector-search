@@ -43,13 +43,13 @@ class RedisApolloApplication {
         val startTime = System.currentTimeMillis()
 
         val filePath = "./redis-apollo-app-kotlin/src/main/resources/Apollo11_Data"
-        utteranceService.loadUtteranceData("$filePath/gUtteranceData.json")
-        tocService.loadTOCData("$filePath/gTOCData.json")
-        tocService.populateUtterances()
-        tocService.summarize()
-        summaryService.embedSummaries()
-        tocService.generateQuestions()
-        questionService.embedQuestions()
+        //utteranceService.loadUtteranceData("$filePath/gUtteranceData.json")
+        //tocService.loadTOCData("$filePath/gTOCData.json")
+        //tocService.populateUtterances()
+        //tocService.summarize()
+        //summaryService.embedSummaries()
+        //tocService.generateQuestions()
+        //questionService.embedQuestions()
         photographService.loadPhotographData("$filePath/gPhotoData.json")
 
         val endTime = System.currentTimeMillis()
@@ -63,7 +63,7 @@ class RedisApolloApplication {
         }
 
         val openAiApi = OpenAiApi.builder()
-            .apiKey(System.getenv("OPEN_AI_KEY"))
+            .apiKey(System.getenv("OPENAI_API_KEY"))
             .restClientBuilder(RestClient.builder().requestFactory(factory))
             .build()
 

@@ -27,9 +27,9 @@ class SearchSemanticCacheService(
 
     fun cacheResponse(query: String, answer: String, isQuestion: Boolean) {
         val cache = SearchSemanticCache(
-            query,
-            answer,
-            isQuestion,
+            query = query,
+            answer = answer,
+            question = isQuestion,
         )
         searchSemanticCacheRepository.save(cache)
     }

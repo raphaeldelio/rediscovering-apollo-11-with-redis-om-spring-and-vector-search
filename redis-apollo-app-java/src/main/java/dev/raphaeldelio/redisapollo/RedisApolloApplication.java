@@ -8,6 +8,8 @@ import dev.raphaeldelio.redisapollo.summary.SummaryService;
 import dev.raphaeldelio.redisapollo.tableofcontents.TOCDataRepository;
 import dev.raphaeldelio.redisapollo.tableofcontents.TOCService;
 import dev.raphaeldelio.redisapollo.utterance.UtteranceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -28,6 +30,8 @@ import java.time.Duration;
 @SpringBootApplication
 public class RedisApolloApplication {
 
+    private static final Logger logger = LoggerFactory.getLogger(RedisApolloApplication.class);
+
     public static void main(String[] args) {
         SpringApplication.run(RedisApolloApplication.class, args);
     }
@@ -42,22 +46,22 @@ public class RedisApolloApplication {
         return args -> {
             long startTime = System.currentTimeMillis();
             String filePath = "./redis-apollo-app-java/src/main/resources/Apollo11_Data/";
-            utteranceService.loadUtteranceData(filePath + "gUtteranceData.json");
+            //utteranceService.loadUtteranceData(filePath + "gUtteranceData.json");
 
-            tocService.loadTOCData(filePath + "gTOCData.json");
-            tocService.populateUtterances();
+            //tocService.loadTOCData(filePath + "gTOCData.json");
+            //tocService.populateUtterances();
 
-            tocService.summarize();
-            summaryService.embedSummaries();
+            //tocService.summarize();
+            //summaryService.embedSummaries();
 
-            tocService.generateQuestions();
-            questionService.embedQuestions();
+            //tocService.generateQuestions();
+            //questionService.embedQuestions();
 
-            photographService.loadPhotographData(filePath + "gPhotoData.json");
+            //photographService.loadPhotographData(filePath + "gPhotoData.json", true);
 
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
-            System.out.println("Data loaded in " + duration + " milliseconds");
+            logger.info("Data loaded in {} milliseconds", duration);
         };
     }
 

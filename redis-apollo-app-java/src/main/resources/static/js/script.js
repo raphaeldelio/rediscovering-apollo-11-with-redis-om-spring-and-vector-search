@@ -359,7 +359,7 @@ function sendQuery(query, imageBase64) {
         if (imageTextData) {
             let imagesTextHTML = `<p><strong>Embedding time:</strong> ${imageTextData.embeddingTime}</p>`
 
-            if (imageData.searchTime) {
+            if (imageTextData.searchTime) {
                 imagesTextHTML += `<p><strong>Search time:</strong> ${imageTextData.searchTime}</p>`;
             }
 

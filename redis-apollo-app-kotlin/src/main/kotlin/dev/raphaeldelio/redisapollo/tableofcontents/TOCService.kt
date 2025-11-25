@@ -180,8 +180,8 @@ class TOCService(
                             )
 
                             toc.questions = response.result.output.text
-                                .lines()
-                                .filter { it.isNotBlank() }
+                                ?.lines()
+                                ?.filter { it.isNotBlank() }
 
                             logger.info("Successfully generated {} questions for TOC entry: {}", toc.questions?.size, toc.startDate)
                             toc

@@ -30,7 +30,7 @@ class RagService(
         )
 
         val response: ChatResponse = chatModel.call(prompt)
-        val enhancedAnswer = response.result.output.text
+        val enhancedAnswer = response.result.output.text ?: ""
         logger.info("AI response: {}", enhancedAnswer)
         return enhancedAnswer
     }
