@@ -1,19 +1,14 @@
 package dev.raphaeldelio.redisapollo.summary
 
-import com.redis.om.spring.tuple.Pair
 import dev.raphaeldelio.redisapollo.rag.RagService
-import dev.raphaeldelio.redisapollo.semanticcache.SearchSemanticCache
-import dev.raphaeldelio.redisapollo.semanticcache.SearchSemanticCacheService
 import dev.raphaeldelio.redisapollo.utterance.Utterance
 import org.springframework.web.bind.annotation.*
-import java.util.*
 
 @RestController
 @RequestMapping("/summary")
 class SummaryController(
     private val summaryService: SummaryService,
-    private val searchSemanticCacheService: SearchSemanticCacheService,
-    private val ragService: RagService
+    private val ragService: RagService,
 ) {
 
     @PostMapping("/search")
@@ -24,20 +19,16 @@ class SummaryController(
 
         if (request.enableSemanticCache) {
             start = System.currentTimeMillis()
-            val cached: Optional<Pair<SearchSemanticCache, Double>> =
-                searchSemanticCacheService.getCacheResponse(embedding, false)
-                    .firstOrNull { it.second < 0.1 }
-                    ?.let { Optional.of(it) } ?: Optional.empty()
-
+            val cached = summaryService.getCacheResponse(request.query)
             val cacheSearchTime = System.currentTimeMillis() - start
 
             if (cached.isPresent) {
                 val hit = cached.get()
                 return mapOf(
                     "query" to request.query,
-                    "ragAnswer" to hit.first.answer,
-                    "cachedQuery" to hit.first.query,
-                    "cachedScore" to hit.second,
+                    "ragAnswer" to hit.response,
+                    "cachedQuery" to hit.prompt,
+                    "cachedScore" to hit.distance,
                     "matchedSummaries" to "",
                     "embeddingTime" to "${embeddingTime}ms",
                     "cacheSearchTime" to "${cacheSearchTime}ms"
@@ -65,7 +56,7 @@ class SummaryController(
             val ragTime = System.currentTimeMillis() - start
 
             if (request.enableSemanticCache) {
-                searchSemanticCacheService.cacheResponse(request.query, answer, false)
+                summaryService.cacheResponse(request.query, answer, false)
             }
 
             return mapOf(

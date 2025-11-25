@@ -33,6 +33,9 @@ dependencies {
     implementation("com.redis.om:redis-om-spring:1.1.0")
     implementation("com.redis.om:redis-om-spring-ai:1.1.0")
     kapt("com.redis.om:redis-om-spring:1.1.0")
+    implementation("com.redis:redisvl:0.0.1")
+    implementation("redis.clients:jedis:7.0.0")
+
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:3.4.1")
 
     // Spring AI
@@ -67,4 +70,11 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "redis.clients" && requested.name == "jedis") {
+            useVersion("7.0.0")
+            because("RedisVL and Redis OM require UnifiedJedis.pipelined() from Jedis 6.x+")
+        }
+    }
+}

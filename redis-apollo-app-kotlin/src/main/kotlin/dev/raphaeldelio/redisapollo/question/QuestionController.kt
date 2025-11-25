@@ -1,7 +1,6 @@
 package dev.raphaeldelio.redisapollo.question
 
 import dev.raphaeldelio.redisapollo.rag.RagService
-import dev.raphaeldelio.redisapollo.semanticcache.SearchSemanticCacheService
 import dev.raphaeldelio.redisapollo.utterance.Utterance
 import org.springframework.web.bind.annotation.*
 
@@ -9,30 +8,28 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/question")
 class QuestionController(
     private val questionService: QuestionService,
-    private val searchSemanticCacheService: SearchSemanticCacheService,
-    private val ragService: RagService
+    private val ragService: RagService,
 ) {
 
     @PostMapping("/search/")
-    fun searchByQuestion(@RequestBody request: SearchRequest): Map<String, Any> {
+    fun searchByQuestion(
+        @RequestBody request: SearchRequest
+    ): Map<String, Any> {
         var start = System.currentTimeMillis()
         val embedding = questionService.embedQuery(request.query)
         val embeddingTime = System.currentTimeMillis() - start
 
         if (request.enableSemanticCache) {
             start = System.currentTimeMillis()
-            val cached = searchSemanticCacheService
-                .getCacheResponse(embedding, true)
-                .firstOrNull { it.second < 0.1 }
-
+            val cached = questionService.getCacheResponse(request.query)
             val cacheSearchTime = System.currentTimeMillis() - start
 
-            if (cached != null) {
+            if (cached.isPresent) {
                 return mapOf(
                     "query" to request.query,
-                    "ragAnswer" to cached.first.answer,
-                    "cachedQuery" to cached.first.query,
-                    "cachedScore" to cached.second,
+                    "ragAnswer" to cached.get().response,
+                    "cachedQuery" to cached.get().prompt,
+                    "cachedScore" to cached.get().distance,
                     "matchedQuestions" to "",
                     "embeddingTime" to "${embeddingTime}ms",
                     "cacheSearchTime" to "${cacheSearchTime}ms"
@@ -60,7 +57,7 @@ class QuestionController(
             val ragTime = System.currentTimeMillis() - start
 
             if (request.enableSemanticCache) {
-                searchSemanticCacheService.cacheResponse(request.query, answer, true)
+                questionService.cacheResponse(request.query, answer, true)
             }
 
             return mapOf(

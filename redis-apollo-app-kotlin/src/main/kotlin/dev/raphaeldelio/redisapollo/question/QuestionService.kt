@@ -4,9 +4,12 @@ import com.redis.om.spring.search.stream.EntityStream
 import com.redis.om.spring.search.stream.SearchStream
 import com.redis.om.spring.tuple.Fields
 import com.redis.om.spring.vectorize.Embedder
+import com.redis.vl.extensions.cache.CacheHit
+import com.redis.vl.extensions.cache.SemanticCache
 import dev.raphaeldelio.redisapollo.tableofcontents.TOCDataRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.Optional
 import java.util.stream.Collectors
 
 @Service
@@ -14,7 +17,8 @@ class QuestionService(
     private val questionRepository: QuestionRepository,
     private val tocDataRepository: TOCDataRepository,
     private val embedder: Embedder,
-    private val entityStream: EntityStream
+    private val entityStream: EntityStream,
+    private val questionsSemanticCache: SemanticCache,
 ) {
     private val logger = LoggerFactory.getLogger(QuestionService::class.java)
 
@@ -59,5 +63,13 @@ class QuestionService(
             .map(Fields.of(`Question$`._THIS, `Question$`._EMBEDDED_QUESTION_SCORE))
             .collect(Collectors.toList())
             .map { QuestionSearchResult(it.first, it.second) }
+    }
+
+    fun getCacheResponse(question: String): Optional<CacheHit> {
+        return questionsSemanticCache.check(question)
+    }
+
+    fun cacheResponse(query: String, answer: String, isQuestion: Boolean) {
+        questionsSemanticCache.store(query, answer)
     }
 }

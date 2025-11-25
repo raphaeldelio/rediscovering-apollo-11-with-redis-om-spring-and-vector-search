@@ -4,9 +4,12 @@ import com.redis.om.spring.search.stream.EntityStream
 import com.redis.om.spring.search.stream.SearchStream
 import com.redis.om.spring.tuple.Fields
 import com.redis.om.spring.vectorize.Embedder
+import com.redis.vl.extensions.cache.CacheHit
+import com.redis.vl.extensions.cache.SemanticCache
 import dev.raphaeldelio.redisapollo.tableofcontents.TOCDataRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.Optional
 import java.util.stream.Collectors
 
 @Service
@@ -14,7 +17,8 @@ class SummaryService(
     private val tocDataRepository: TOCDataRepository,
     private val summaryRepository: SummaryRepository,
     private val embedder: Embedder,
-    private val entityStream: EntityStream
+    private val entityStream: EntityStream,
+    private val summarySemanticCache: SemanticCache
 ) {
     private val logger = LoggerFactory.getLogger(SummaryService::class.java)
 
@@ -55,5 +59,13 @@ class SummaryService(
             .collect(Collectors.toList())
 
         return summaries.map { SummarySearchResult(it.first, it.second) }
+    }
+
+    fun getCacheResponse(question: String): Optional<CacheHit> {
+        return summarySemanticCache.check(question)
+    }
+
+    fun cacheResponse(query: String, answer: String, isQuestion: Boolean) {
+        summarySemanticCache.store(query, answer)
     }
 }
