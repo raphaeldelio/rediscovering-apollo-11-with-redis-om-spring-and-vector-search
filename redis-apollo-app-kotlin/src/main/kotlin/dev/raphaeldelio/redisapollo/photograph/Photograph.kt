@@ -25,8 +25,6 @@ data class Photograph(
     @Vectorize(
         destination = "embeddedDescription",
         embeddingType = EmbeddingType.SENTENCE,
-        provider = EmbeddingProvider.OPENAI,
-        openAiEmbeddingModel = OpenAiApi.EmbeddingModel.TEXT_EMBEDDING_3_LARGE
     )
     var description: String = "",
 
@@ -51,7 +49,7 @@ data class Photograph(
         schemaFieldType = SchemaFieldType.VECTOR,
         algorithm = VectorField.VectorAlgorithm.HNSW,
         type = VectorType.FLOAT32,
-        dimension = 3072,
+        dimension = 384,
         distanceMetric = DistanceMetric.COSINE,
         initialCapacity = 10
     )

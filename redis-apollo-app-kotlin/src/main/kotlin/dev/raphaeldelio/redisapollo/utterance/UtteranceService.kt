@@ -22,12 +22,18 @@ class UtteranceService(
 
     fun loadUtteranceData(filePath: String) {
         logger.info("Loading utterance data from file: {}", filePath)
-        fileService.readAndProcessFile(filePath, Utterance::class.java) { data ->
-            data.filter { isValidUtterance(it) }.forEach { utterance ->
-                utterance.timestampInt = fileService.toHMSToSeconds(utterance.timestamp)
-                utteranceRepository.save(utterance)
-            }
-        }
+
+         fileService.readAndProcessFile(filePath, Utterance::class.java) { data ->
+             val utterances = data.filter { isValidUtterance(it) }.map { utterance ->
+                 utterance.timestampInt = fileService.toHMSToSeconds(utterance.timestamp)
+                 utterance
+             }
+
+             utterances.chunked(500).forEach { batch ->
+                 utteranceRepository.saveAll(batch)
+             }
+         }
+
         logger.info("Utterance data loaded successfully")
     }
 

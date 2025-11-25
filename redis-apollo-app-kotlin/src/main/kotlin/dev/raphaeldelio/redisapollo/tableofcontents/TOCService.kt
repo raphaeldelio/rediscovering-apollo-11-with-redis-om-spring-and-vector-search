@@ -29,12 +29,14 @@ class TOCService(
     fun loadTOCData(filePath: String) {
         logger.info("Loading TOC data from file: {}", filePath)
         fileService.readAndProcessFile(filePath, TOCData::class.java) { data ->
-            data.filter(::isValidToc).forEach { tocData ->
-                val startInt = fileService.asSeconds(tocData.startDate)
-                tocData.startDate = tocData.startDate.replace(":", ";")
-                tocData.startDateInt = startInt
-                tocDataRepository.save(tocData)
-            }
+            data.filter(::isValidToc)
+                .onEach { tocData ->
+                    val startInt = fileService.asSeconds(tocData.startDate)
+                    tocData.startDate = tocData.startDate.replace(":", ";")
+                    tocData.startDateInt = startInt }
+                .chunked(100) { batch ->
+                    tocDataRepository.saveAll(batch)
+                }
         }
     }
 
@@ -50,32 +52,38 @@ class TOCService(
 
         val toFilterOut = redisService.getZRangeByScore("utterances", 2.0, Double.MAX_VALUE)
 
-        tocList.forEachIndexed { i, toc ->
-            logger.info("Processing TOC entry: {}", toc.startDateInt)
-            if (!overwrite && !toc.concatenatedUtterances.isNullOrBlank()) {
-                logger.info("Utterances already grouped for TOC entry: {}", toc.startDate)
-                return@forEachIndexed
+        tocList.onEach { logger.info("Processing TOC entry: {}", it.startDateInt) }
+            .filter { overwrite || it.concatenatedUtterances.isNullOrBlank() }
+            .onEach {
+                if (!overwrite) {
+                    logger.info("Utterances already grouped for TOC entry: {}", it.startDate)
+                }
             }
+            .mapNotNull { toc ->
+                val start = toc.startDateInt
+                val end = tocList.getOrNull(tocList.indexOf(toc) + 1)?.startDateInt ?: Int.MAX_VALUE
 
-            val start = toc.startDateInt
-            val end = tocList.getOrNull(i + 1)?.startDateInt ?: Int.MAX_VALUE
+                val utterances = entityStream.of(Utterance::class.java)
+                    .filter(TIMESTAMP_INT.ge(start).and(TIMESTAMP_INT.le(end)))
+                    .collect(Collectors.toList())
+                    .filterNot { it.text in toFilterOut }
 
-            val utterances = entityStream.of(Utterance::class.java)
-                .filter(TIMESTAMP_INT.ge(start).and(TIMESTAMP_INT.le(end)))
-                .collect(Collectors.toList())
-                .filterNot { toFilterOut.contains(it.text) }
+                if (utterances.isEmpty()) {
+                    logger.info("No utterances found for TOC entry: {}", toc.startDate)
+                    return@mapNotNull null
+                }
 
-            val grouped = utterances.joinToString("\n") { "${it.speaker}:${it.text}" }
+                val grouped = utterances.joinToString("\n") { "${it.speaker}: ${it.text}" }
 
-            if (grouped.isNotBlank()) {
-                toc.concatenatedUtterances = grouped
-                toc.utterances = utterances
-                tocDataRepository.save(toc)
-                logger.info("Grouped utterances for TOC entry: {}", toc.startDate)
-            } else {
-                logger.info("No utterances found for TOC entry: {}", toc.startDate)
+                toc.apply {
+                    concatenatedUtterances = grouped
+                    this.utterances = utterances
+                }
             }
-        }
+            .onEach {
+                tocDataRepository.save(it)
+                logger.info("Grouped utterances for TOC entry: {}", it.startDate)
+            }
 
         logger.info("Grouping complete")
     }

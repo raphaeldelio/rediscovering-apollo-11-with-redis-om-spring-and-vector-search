@@ -46,7 +46,7 @@ class ImageService(
             "tmp",
             null,
             null,
-            "").apply {
+            " ").apply {
                 imagePath = tmpImagePath
         }
         return photographsRepository.save(tmpPhoto)
