@@ -1,5 +1,7 @@
-package dev.raphaeldelio.redisapollo.dataloader.workflow
+package dev.raphaeldelio.redisapollo.dataloader
 
+import dev.raphaeldelio.redisapollo.dataloader.workflow.QuestionGenerationWorkflow
+import dev.raphaeldelio.redisapollo.dataloader.workflow.SummarizationWorkflow
 import dev.raphaeldelio.redisapollo.photograph.PhotographService
 import dev.raphaeldelio.redisapollo.tableofcontents.TOCService
 import dev.raphaeldelio.redisapollo.utterance.UtteranceService
@@ -18,9 +20,17 @@ class DataLoaderRunner {
         summarizationWorkflow: SummarizationWorkflow,
         questionGenerationWorkflow: QuestionGenerationWorkflow
     ): CommandLineRunner = CommandLineRunner {
-        val startTime = System.currentTimeMillis()
-
         val dirPath = "./redis-apollo-app-kotlin/src/main/resources/Apollo11_Data"
+
+        photographService.loadPhotographData("$dirPath/gPhotoData.json")
+
+
+        if (utteranceService.count() > 0) {
+            println("Data already loaded")
+            return@CommandLineRunner
+        }
+
+        val startTime = System.currentTimeMillis()
 
         utteranceService.loadUtteranceData("$dirPath/gUtteranceData.json")
 
@@ -32,7 +42,6 @@ class DataLoaderRunner {
             questionGenerationWorkflow.run()
         }
 
-        photographService.loadPhotographData("$dirPath/gPhotoData.json")
 
         val endTime = System.currentTimeMillis()
         println("Data loaded in ${endTime - startTime} milliseconds")

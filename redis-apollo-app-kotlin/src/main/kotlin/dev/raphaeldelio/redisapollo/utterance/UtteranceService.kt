@@ -37,6 +37,8 @@ class UtteranceService(
         logger.info("Utterance data loaded successfully")
     }
 
+    fun count() = utteranceRepository.count()
+
     fun embedUtterance(text: String): ByteArray {
         logger.info("Creating utterance embedding for text: {}", text)
         return embedder.getTextEmbeddingsAsBytes(listOf(text), `Utterance$`.TEXT).first()
