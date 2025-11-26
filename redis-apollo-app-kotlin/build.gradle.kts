@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm") version "1.9.25"
     kotlin("plugin.spring") version "1.9.25"
     kotlin("kapt") version "1.9.25"
-    id("org.springframework.boot") version "3.4.1"
+    id("org.springframework.boot") version "3.5.7"
     id("io.spring.dependency-management") version "1.1.7"
     java
 }
@@ -17,11 +17,10 @@ java {
 }
 
 repositories {
-    mavenLocal()
     mavenCentral()
-    maven { url = uri("https://repo.spring.io/milestone") }
-    maven { url = uri("https://repo.spring.io/snapshot") }
 }
+
+extra["springAiVersion"] = "1.1.0"
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -39,12 +38,10 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:3.4.1")
 
     // Spring AI
-    implementation("org.springframework.ai:spring-ai-openai:1.0.0")
-    implementation("org.springframework.ai:spring-ai-ollama:1.0.0")
-    implementation("org.springframework.ai:spring-ai-azure-openai:1.0.0")
-    implementation("org.springframework.ai:spring-ai-vertex-ai-embedding:1.0.0")
-    implementation("org.springframework.ai:spring-ai-bedrock:1.0.0")
-    implementation("org.springframework.ai:spring-ai-transformers:1.0.0")
+    implementation("org.springframework.ai:spring-ai-starter-model-openai")
+    implementation("org.springframework.ai:spring-ai-ollama")
+    implementation("org.springframework.ai:spring-ai-bedrock")
+    implementation("org.springframework.ai:spring-ai-transformers")
 
     implementation("jakarta.websocket:jakarta.websocket-api:2.1.1")
     implementation("jakarta.websocket:jakarta.websocket-client-api:2.1.1")
@@ -58,6 +55,12 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.ai:spring-ai-bom:${property("springAiVersion")}")
+    }
 }
 
 kotlin {

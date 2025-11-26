@@ -14,36 +14,11 @@ import java.util.stream.Collectors
 
 @Service
 class SummaryService(
-    private val tocDataRepository: TOCDataRepository,
-    private val summaryRepository: SummaryRepository,
     private val embedder: Embedder,
     private val entityStream: EntityStream,
     private val summarySemanticCache: SemanticCache
 ) {
     private val logger = LoggerFactory.getLogger(SummaryService::class.java)
-
-    fun embedSummaries(overwrite: Boolean = false) {
-        logger.info("Creating utterance summaries")
-
-        val tocDataList = tocDataRepository.findAll()
-
-        val toSaveList = tocDataList
-            .filter { it.concatenatedUtterances != null && it.summary != null }
-            .filter { toc ->
-                overwrite || summaryRepository.findById(toc.startDate).isEmpty
-            }
-            .map { toc ->
-                Summary(
-                    toc.startDate,
-                    toc.concatenatedUtterances!!,
-                    toc.utterances ?: emptyList(),
-                    toc.summary!!
-                )
-            }
-
-        summaryRepository.saveAll(toSaveList)
-        logger.info("Utterance summaries embedded")
-    }
 
     fun embedQuery(query: String): ByteArray {
         logger.info("Received question: {}", query)

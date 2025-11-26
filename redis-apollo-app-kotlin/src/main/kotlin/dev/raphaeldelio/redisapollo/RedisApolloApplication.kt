@@ -8,18 +8,15 @@ import dev.raphaeldelio.redisapollo.summary.SummaryService
 import dev.raphaeldelio.redisapollo.tableofcontents.TOCDataRepository
 import dev.raphaeldelio.redisapollo.tableofcontents.TOCService
 import dev.raphaeldelio.redisapollo.utterance.UtteranceService
-import org.springframework.ai.openai.OpenAiChatModel
-import org.springframework.ai.openai.OpenAiChatOptions
-import org.springframework.ai.openai.api.OpenAiApi
+import dev.raphaeldelio.redisapollo.workflow.QuestionGenerationWorkflow
+import dev.raphaeldelio.redisapollo.workflow.SummarizationWorkflow
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.FilterType
-import org.springframework.http.client.SimpleClientHttpRequestFactory
-import org.springframework.web.client.RestClient
-import java.time.Duration
+
 
 @EnableRedisDocumentRepositories(basePackages = ["dev.raphaeldelio.redisapollo.tableofcontents"])
 @EnableRedisEnhancedRepositories(
@@ -38,43 +35,24 @@ class RedisApolloApplication {
         tocService: TOCService,
         photographService: PhotographService,
         questionService: QuestionService,
-        summaryService: SummaryService
+        summaryService: SummaryService,
+        summarizationWorkflow: SummarizationWorkflow,
+        questionGenerationWorkflow: QuestionGenerationWorkflow
     ): CommandLineRunner = CommandLineRunner {
         val startTime = System.currentTimeMillis()
 
         val filePath = "./redis-apollo-app-kotlin/src/main/resources/Apollo11_Data"
         //utteranceService.loadUtteranceData("$filePath/gUtteranceData.json")
-        //tocService.loadTOCData("$filePath/gTOCData.json")
-        //tocService.populateUtterances()
-        //tocService.summarize()
-        //summaryService.embedSummaries()
-        //tocService.generateQuestions()
-        //questionService.embedQuestions()
-        photographService.loadPhotographData("$filePath/gPhotoData.json")
+        tocService.loadTOCData("$filePath/gTOCData.json")
+        tocService.populateUtterances()
+        summarizationWorkflow.summarize()
+        summarizationWorkflow.embedSummaries()
+        questionGenerationWorkflow.generateQuestions()
+        questionGenerationWorkflow.embedQuestions()
+        //photographService.loadPhotographData("$filePath/gPhotoData.json")
 
         val endTime = System.currentTimeMillis()
         println("Data loaded in ${endTime - startTime} milliseconds")
-    }
-
-    @Bean
-    fun openAiChatModel(): OpenAiChatModel {
-        val factory = SimpleClientHttpRequestFactory().apply {
-            setReadTimeout(Duration.ofSeconds(60))
-        }
-
-        val openAiApi = OpenAiApi.builder()
-            .apiKey(System.getenv("OPENAI_API_KEY"))
-            .restClientBuilder(RestClient.builder().requestFactory(factory))
-            .build()
-
-        val options = OpenAiChatOptions.builder()
-            .model("gpt-4o-mini")
-            .build()
-
-        return OpenAiChatModel.builder()
-            .openAiApi(openAiApi)
-            .defaultOptions(options)
-            .build()
     }
 }
 
