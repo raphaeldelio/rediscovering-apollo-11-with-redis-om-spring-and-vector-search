@@ -39,21 +39,22 @@ class SummarizationWorkflow(
 
         val processed = toGenerate.map { toc ->
             async(Dispatchers.IO) {
-                try {
+                runCatching {
                     logger.info("Generating summary for TOC entry: {}", toc.startDate)
+
                     val response = summarizationChatClient
                         .prompt()
-                        .user(toc.concatenatedUtterances ?: "")
+                        .user(toc.concatenatedUtterances.orEmpty())
                         .call()
                         .chatResponse()
 
                     toc.summary = response?.result?.output?.text
                     logger.info("Successfully generated summary for TOC entry: {}", toc.startDate)
+
                     toc
-                } catch (e: Exception) {
+                }.onFailure { e ->
                     logger.error("Error generating summary for TOC entry: {}", toc.startDate, e)
-                    null
-                }
+                }.getOrNull()
             }
         }.mapNotNull { it.await() }
 

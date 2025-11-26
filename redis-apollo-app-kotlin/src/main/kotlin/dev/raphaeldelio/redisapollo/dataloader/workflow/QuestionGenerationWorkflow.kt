@@ -43,11 +43,12 @@ class QuestionGenerationWorkflow(
 
         val processed = toGenerate.map { toc ->
             async(Dispatchers.IO) {
-                try {
+                runCatching {
                     logger.info("Generating questions for TOC entry: {}", toc.startDate)
+
                     val response = questionGenerationChatClient
                         .prompt()
-                        .user(toc.concatenatedUtterances ?: "")
+                        .user(toc.concatenatedUtterances.orEmpty())
                         .call()
                         .chatResponse()
 
@@ -55,12 +56,16 @@ class QuestionGenerationWorkflow(
                         ?.lines()
                         ?.filter { it.isNotBlank() }
 
-                    logger.info("Successfully generated {} questions for TOC entry: {}", toc.questions?.size, toc.startDate)
+                    logger.info(
+                        "Successfully generated {} questions for TOC entry: {}",
+                        toc.questions?.size,
+                        toc.startDate
+                    )
+
                     toc
-                } catch (e: Exception) {
+                }.onFailure { e ->
                     logger.error("Error generating questions for TOC entry: {}", toc.startDate, e)
-                    null
-                }
+                }.getOrNull()
             }
         }.mapNotNull { it.await() }
 
