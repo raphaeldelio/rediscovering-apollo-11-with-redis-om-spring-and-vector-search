@@ -10,6 +10,7 @@ import dev.raphaeldelio.redisapollo.tableofcontents.TOCService
 import dev.raphaeldelio.redisapollo.utterance.UtteranceService
 import dev.raphaeldelio.redisapollo.workflow.QuestionGenerationWorkflow
 import dev.raphaeldelio.redisapollo.workflow.SummarizationWorkflow
+import kotlinx.coroutines.runBlocking
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
@@ -45,10 +46,13 @@ class RedisApolloApplication {
         //utteranceService.loadUtteranceData("$filePath/gUtteranceData.json")
         tocService.loadTOCData("$filePath/gTOCData.json")
         tocService.populateUtterances()
-        summarizationWorkflow.summarize()
-        summarizationWorkflow.embedSummaries()
-        questionGenerationWorkflow.generateQuestions()
-        questionGenerationWorkflow.embedQuestions()
+
+        runBlocking {
+            summarizationWorkflow.summarize()
+            summarizationWorkflow.embedSummaries()
+            questionGenerationWorkflow.generateQuestions()
+            questionGenerationWorkflow.embedQuestions()
+        }
         //photographService.loadPhotographData("$filePath/gPhotoData.json")
 
         val endTime = System.currentTimeMillis()

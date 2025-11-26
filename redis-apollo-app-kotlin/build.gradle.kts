@@ -51,6 +51,10 @@ dependencies {
     implementation("ai.djl.spring:djl-spring-boot-starter-pytorch-auto:0.26")
     implementation("ai.djl.huggingface:tokenizers:0.30.0")
 
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.10.2")
+
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
