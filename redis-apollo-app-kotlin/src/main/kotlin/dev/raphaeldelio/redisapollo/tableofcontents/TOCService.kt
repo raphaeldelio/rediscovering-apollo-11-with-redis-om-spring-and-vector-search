@@ -1,7 +1,7 @@
 package dev.raphaeldelio.redisapollo.tableofcontents
 
 import com.redis.om.spring.search.stream.EntityStream
-import dev.raphaeldelio.redisapollo.FileService
+import dev.raphaeldelio.redisapollo.dataloader.FileService
 import dev.raphaeldelio.redisapollo.RedisService
 import dev.raphaeldelio.redisapollo.utterance.Utterance
 import dev.raphaeldelio.redisapollo.utterance.`Utterance$`.TIMESTAMP_INT

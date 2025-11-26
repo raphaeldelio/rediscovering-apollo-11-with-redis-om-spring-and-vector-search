@@ -1,4 +1,4 @@
-package dev.raphaeldelio.redisapollo
+package dev.raphaeldelio.redisapollo.dataloader
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper

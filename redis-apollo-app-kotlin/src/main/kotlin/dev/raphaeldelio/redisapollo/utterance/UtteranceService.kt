@@ -5,7 +5,7 @@ import com.redis.om.spring.search.stream.SearchStream
 import com.redis.om.spring.tuple.Fields
 import com.redis.om.spring.tuple.Pair
 import com.redis.om.spring.vectorize.Embedder
-import dev.raphaeldelio.redisapollo.FileService
+import dev.raphaeldelio.redisapollo.dataloader.FileService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.stream.Collectors

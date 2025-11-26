@@ -22,9 +22,6 @@ class DataLoaderRunner {
     ): CommandLineRunner = CommandLineRunner {
         val dirPath = "./redis-apollo-app-kotlin/src/main/resources/Apollo11_Data"
 
-        photographService.loadPhotographData("$dirPath/gPhotoData.json")
-
-
         if (utteranceService.count() > 0) {
             println("Data already loaded")
             return@CommandLineRunner
@@ -42,6 +39,7 @@ class DataLoaderRunner {
             questionGenerationWorkflow.run()
         }
 
+        photographService.loadPhotographData("$dirPath/gPhotoData.json")
 
         val endTime = System.currentTimeMillis()
         println("Data loaded in ${endTime - startTime} milliseconds")
