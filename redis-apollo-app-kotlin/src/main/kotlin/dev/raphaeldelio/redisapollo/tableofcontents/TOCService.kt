@@ -26,7 +26,7 @@ class TOCService(
                     val startInt = fileService.asSeconds(tocData.startDate)
                     tocData.startDate = tocData.startDate.replace(":", ";")
                     tocData.startDateInt = startInt }
-                .chunked(100) { batch ->
+                .chunked(1000) { batch ->
                     tocDataRepository.saveAll(batch)
                 }
         }
@@ -78,5 +78,46 @@ class TOCService(
             }
 
         logger.info("Grouping complete")
+    }
+
+    fun getAllWithoutQuestions(): List<TOCData> {
+        return tocDataRepository.findAll()
+            .filter {
+                !it.concatenatedUtterances.isNullOrBlank() &&
+                        it.questions.isNullOrEmpty()
+            }
+    }
+
+    fun getAllWithQuestions(): List<TOCData> {
+        return tocDataRepository.findAll().filter { !it.questions.isNullOrEmpty() }
+    }
+
+    fun getAllWithoutSummary(): List<TOCData> {
+        return tocDataRepository.findAll()
+            .filter {
+                !it.concatenatedUtterances.isNullOrBlank() &&
+                        it.summary.isNullOrEmpty()
+            }
+    }
+
+    fun getAllWithSummary(): List<TOCData> {
+        return tocDataRepository.findAll().filter { !it.summary.isNullOrEmpty() }
+    }
+
+    fun saveAll(tocData: List<TOCData>): List<TOCData> {
+        tocDataRepository
+        return tocDataRepository.saveAll(tocData)
+    }
+
+    fun updateSummary(tocData: List<TOCData>) {
+        tocData.forEach { toc ->
+            tocDataRepository.updateField(toc, `TOCData$`.SUMMARY, toc.summary)
+        }
+    }
+
+    fun updateQuestions(tocData: List<TOCData>) {
+        tocData.forEach { toc ->
+            tocDataRepository.updateField(toc, `TOCData$`.QUESTIONS, toc.questions)
+        }
     }
 }

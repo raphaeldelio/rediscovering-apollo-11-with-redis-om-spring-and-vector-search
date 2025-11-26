@@ -3,13 +3,11 @@ package dev.raphaeldelio.redisapollo
 import com.redis.om.spring.annotations.EnableRedisDocumentRepositories
 import com.redis.om.spring.annotations.EnableRedisEnhancedRepositories
 import dev.raphaeldelio.redisapollo.photograph.PhotographService
-import dev.raphaeldelio.redisapollo.question.QuestionService
-import dev.raphaeldelio.redisapollo.summary.SummaryService
 import dev.raphaeldelio.redisapollo.tableofcontents.TOCDataRepository
 import dev.raphaeldelio.redisapollo.tableofcontents.TOCService
 import dev.raphaeldelio.redisapollo.utterance.UtteranceService
-import dev.raphaeldelio.redisapollo.workflow.QuestionGenerationWorkflow
-import dev.raphaeldelio.redisapollo.workflow.SummarizationWorkflow
+import dev.raphaeldelio.redisapollo.dataloader.workflow.QuestionGenerationWorkflow
+import dev.raphaeldelio.redisapollo.dataloader.workflow.SummarizationWorkflow
 import kotlinx.coroutines.runBlocking
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -28,37 +26,7 @@ import org.springframework.context.annotation.FilterType
     )]
 )
 @SpringBootApplication
-class RedisApolloApplication {
-
-    @Bean
-    fun loadData(
-        utteranceService: UtteranceService,
-        tocService: TOCService,
-        photographService: PhotographService,
-        questionService: QuestionService,
-        summaryService: SummaryService,
-        summarizationWorkflow: SummarizationWorkflow,
-        questionGenerationWorkflow: QuestionGenerationWorkflow
-    ): CommandLineRunner = CommandLineRunner {
-        val startTime = System.currentTimeMillis()
-
-        val filePath = "./redis-apollo-app-kotlin/src/main/resources/Apollo11_Data"
-        //utteranceService.loadUtteranceData("$filePath/gUtteranceData.json")
-        tocService.loadTOCData("$filePath/gTOCData.json")
-        tocService.populateUtterances()
-
-        runBlocking {
-            summarizationWorkflow.summarize()
-            summarizationWorkflow.embedSummaries()
-            questionGenerationWorkflow.generateQuestions()
-            questionGenerationWorkflow.embedQuestions()
-        }
-        //photographService.loadPhotographData("$filePath/gPhotoData.json")
-
-        val endTime = System.currentTimeMillis()
-        println("Data loaded in ${endTime - startTime} milliseconds")
-    }
-}
+class RedisApolloApplication
 
 fun main(args: Array<String>) {
     runApplication<RedisApolloApplication>(*args)

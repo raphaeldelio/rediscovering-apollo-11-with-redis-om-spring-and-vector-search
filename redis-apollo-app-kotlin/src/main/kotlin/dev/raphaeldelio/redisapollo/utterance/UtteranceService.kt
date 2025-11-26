@@ -29,7 +29,7 @@ class UtteranceService(
                  utterance
              }
 
-             utterances.chunked(500).forEach { batch ->
+             utterances.chunked(1000).forEach { batch ->
                  utteranceRepository.saveAll(batch)
              }
          }

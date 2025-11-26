@@ -1,4 +1,4 @@
-package dev.raphaeldelio.redisapollo.workflow
+package dev.raphaeldelio.redisapollo.dataloader.workflow
 
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.model.ChatModel

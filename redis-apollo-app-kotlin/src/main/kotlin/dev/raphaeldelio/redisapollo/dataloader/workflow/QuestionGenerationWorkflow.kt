@@ -1,8 +1,9 @@
-package dev.raphaeldelio.redisapollo.workflow
+package dev.raphaeldelio.redisapollo.dataloader.workflow
 
 import dev.raphaeldelio.redisapollo.question.Question
 import dev.raphaeldelio.redisapollo.question.QuestionRepository
-import dev.raphaeldelio.redisapollo.tableofcontents.TOCDataRepository
+import dev.raphaeldelio.redisapollo.tableofcontents.TOCData
+import dev.raphaeldelio.redisapollo.tableofcontents.TOCService
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
@@ -10,28 +11,37 @@ import org.springframework.stereotype.Service
 
 @Service
 class QuestionGenerationWorkflow(
-    private val tocDataRepository: TOCDataRepository,
+    private val tocService: TOCService,
     private val questionRepository: QuestionRepository,
     private val questionGenerationChatClient: ChatClient
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    suspend fun generateQuestions(overwrite: Boolean = false) = coroutineScope {
-        logger.info("Generating questions for TOC entries")
-        val toProcess = tocDataRepository.findAll()
-            .filter {
-                !it.concatenatedUtterances.isNullOrBlank() &&
-                        (overwrite || it.questions == null)
-            }
+    suspend fun run() {
+        logger.info("Creating questions for TOC entries")
+        val toGenerate = tocService.getAllWithoutQuestions()
 
-        if (toProcess.isEmpty()) {
+        if (toGenerate.isEmpty()) {
             logger.info("No TOC entries need questions generated")
-            return@coroutineScope
+            return
         }
 
-        logger.info("Processing ${toProcess.size} TOC entries")
+        generateQuestions(toGenerate)
 
-        val processed = toProcess.map { toc ->
+        val toEmbed = tocService.getAllWithQuestions()
+
+        if (toEmbed.isEmpty()) {
+            logger.info("No TOC entries with questions to embed")
+            return
+        }
+
+        embedQuestions(toEmbed)
+    }
+
+    private suspend fun generateQuestions(toGenerate: List<TOCData>) = coroutineScope {
+        logger.info("Processing ${toGenerate.size} TOC entries")
+
+        val processed = toGenerate.map { toc ->
             async(Dispatchers.IO) {
                 try {
                     logger.info("Generating questions for TOC entry: {}", toc.startDate)
@@ -55,28 +65,20 @@ class QuestionGenerationWorkflow(
         }.mapNotNull { it.await() }
 
         if (processed.isNotEmpty()) {
-            tocDataRepository.saveAll(processed)
+            tocService.updateQuestions(processed)
             logger.info("Saved {} TOC entries", processed.size)
         }
 
         logger.info("Completed generating questions for all TOC entries")
     }
 
-    suspend fun embedQuestions(overwrite: Boolean = false) = coroutineScope {
+    private suspend fun embedQuestions(toEmbed: List<TOCData>) = coroutineScope {
         logger.info("Creating question embeddings")
 
-        val tocDataList = tocDataRepository.findAll()
-            .filter { it.concatenatedUtterances != null && it.questions != null }
-
-        if (tocDataList.isEmpty()) {
-            logger.info("No TOC entries with questions to embed")
-            return@coroutineScope
-        }
-
-        val allQuestions = tocDataList.flatMap { toc ->
+        val allQuestions = toEmbed.flatMap { toc ->
             toc.questions!!.mapIndexedNotNull { index, questionText ->
                 val id = "${toc.startDate}-$index"
-                if (questionRepository.findById(id).isEmpty || overwrite) {
+                if (questionRepository.findById(id).isEmpty) {
                     Question(
                         id,
                         toc.concatenatedUtterances!!,
@@ -93,14 +95,12 @@ class QuestionGenerationWorkflow(
         }
 
         val batchSize = 100
-
         allQuestions.chunked(batchSize)
             .map { batch ->
                 async(Dispatchers.IO) {
                     questionRepository.saveAll(batch)
                 }
-            }
-            .awaitAll()
+            }.awaitAll()
 
         logger.info("Embedding questions created successfully - total: ${allQuestions.size}")
     }

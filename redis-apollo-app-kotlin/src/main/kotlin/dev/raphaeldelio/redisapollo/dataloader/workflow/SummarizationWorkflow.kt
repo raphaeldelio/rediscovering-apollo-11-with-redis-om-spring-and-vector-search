@@ -1,8 +1,9 @@
-package dev.raphaeldelio.redisapollo.workflow
+package dev.raphaeldelio.redisapollo.dataloader.workflow
 
 import dev.raphaeldelio.redisapollo.summary.Summary
 import dev.raphaeldelio.redisapollo.summary.SummaryRepository
-import dev.raphaeldelio.redisapollo.tableofcontents.TOCDataRepository
+import dev.raphaeldelio.redisapollo.tableofcontents.TOCData
+import dev.raphaeldelio.redisapollo.tableofcontents.TOCService
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
@@ -10,28 +11,33 @@ import org.springframework.stereotype.Service
 
 @Service
 class SummarizationWorkflow(
-    private val tocDataRepository: TOCDataRepository,
+    private val tocService: TOCService,
     private val summaryRepository: SummaryRepository,
     private val summarizationChatClient: ChatClient
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    suspend fun summarize(overwrite: Boolean = false) = coroutineScope {
+    suspend fun run() {
         logger.info("Summarizing TOC entries")
-        val toProcess = tocDataRepository.findAll()
-            .filter {
-                !it.concatenatedUtterances.isNullOrBlank() &&
-                        (overwrite || it.summary == null)
-            }
+        val toGenerate = tocService.getAllWithoutSummary()
 
-        if (toProcess.isEmpty()) {
+        if (toGenerate.isEmpty()) {
             logger.info("No TOC entries need summaries generated")
-            return@coroutineScope
+            return
         }
 
-        logger.info("Processing ${toProcess.size} TOC entries")
+        summarize(toGenerate)
 
-        val processed = toProcess.map { toc ->
+        val toEmbed = tocService.getAllWithSummary()
+            .filter { toc -> summaryRepository.findById(toc.startDate).isEmpty }
+
+        embedSummaries(toEmbed)
+    }
+
+    private suspend fun summarize(toGenerate: List<TOCData>) = coroutineScope {
+        logger.info("Processing ${toGenerate.size} TOC entries")
+
+        val processed = toGenerate.map { toc ->
             async(Dispatchers.IO) {
                 try {
                     logger.info("Generating summary for TOC entry: {}", toc.startDate)
@@ -52,22 +58,17 @@ class SummarizationWorkflow(
         }.mapNotNull { it.await() }
 
         if (processed.isNotEmpty()) {
-            tocDataRepository.saveAll(processed)
+            tocService.updateSummary(processed)
             logger.info("Saved {} TOC entries", processed.size)
         }
 
         logger.info("Completed generating summaries for all TOC entries")
     }
 
-    suspend fun embedSummaries(overwrite: Boolean = false) = coroutineScope {
+    private suspend fun embedSummaries(toEmbed: List<TOCData>) = coroutineScope {
         logger.info("Creating utterance summaries")
 
-        val allSummaries = tocDataRepository.findAll()
-            .filter { it.concatenatedUtterances != null && it.summary != null }
-            .filter { toc ->
-                overwrite || summaryRepository.findById(toc.startDate).isEmpty
-            }
-            .map { toc ->
+        val summaries = toEmbed.map { toc ->
                 Summary(
                     toc.startDate,
                     toc.concatenatedUtterances!!,
@@ -76,20 +77,19 @@ class SummarizationWorkflow(
                 )
             }
 
-        if (allSummaries.isEmpty()) {
+        if (summaries.isEmpty()) {
             logger.info("No new summaries to embed")
             return@coroutineScope
         }
 
         val batchSize = 100
-
-        allSummaries.chunked(batchSize)
+        summaries.chunked(batchSize)
             .map { batch ->
                 async(Dispatchers.IO) {
                     summaryRepository.saveAll(batch)
                 }
             }.awaitAll()
 
-        logger.info("Utterance summaries embedded - total: ${allSummaries.size}")
+        logger.info("Utterance summaries embedded - total: ${summaries.size}")
     }
 }
