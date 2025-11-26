@@ -57,7 +57,7 @@ class QuestionController(
             val ragTime = System.currentTimeMillis() - start
 
             if (request.enableSemanticCache) {
-                questionService.cacheResponse(request.query, answer, true)
+                questionService.cacheResponse(request.query, answer)
             }
 
             return RagResponse(

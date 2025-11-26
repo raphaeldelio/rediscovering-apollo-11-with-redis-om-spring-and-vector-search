@@ -6,7 +6,6 @@ import com.redis.om.spring.tuple.Fields
 import com.redis.om.spring.vectorize.Embedder
 import com.redis.vl.extensions.cache.CacheHit
 import com.redis.vl.extensions.cache.SemanticCache
-import dev.raphaeldelio.redisapollo.tableofcontents.TOCDataRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.Optional
@@ -40,7 +39,7 @@ class SummaryService(
         return summarySemanticCache.check(question)
     }
 
-    fun cacheResponse(query: String, answer: String, isQuestion: Boolean) {
+    fun cacheResponse(query: String, answer: String) {
         summarySemanticCache.store(query, answer)
     }
 }

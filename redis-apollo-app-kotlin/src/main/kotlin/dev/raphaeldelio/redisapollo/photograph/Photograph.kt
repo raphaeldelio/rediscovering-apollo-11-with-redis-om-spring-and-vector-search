@@ -3,7 +3,6 @@ package dev.raphaeldelio.redisapollo.photograph
 import com.redis.om.spring.annotations.*
 import com.redis.om.spring.indexing.DistanceMetric
 import com.redis.om.spring.indexing.VectorType
-import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.data.annotation.Id
 import org.springframework.data.redis.core.RedisHash
 import org.springframework.lang.NonNull

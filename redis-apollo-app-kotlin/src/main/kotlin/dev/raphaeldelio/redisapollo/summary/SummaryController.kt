@@ -55,7 +55,7 @@ class SummaryController(
             val ragTime = System.currentTimeMillis() - start
 
             if (request.enableSemanticCache) {
-                summaryService.cacheResponse(request.query, answer, false)
+                summaryService.cacheResponse(request.query, answer)
             }
 
             return RagSummaryResponse(

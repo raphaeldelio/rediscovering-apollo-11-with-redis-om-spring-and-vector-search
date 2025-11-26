@@ -38,7 +38,7 @@ class QuestionService(
         return questionsSemanticCache.check(question)
     }
 
-    fun cacheResponse(query: String, answer: String, isQuestion: Boolean) {
+    fun cacheResponse(query: String, answer: String) {
         questionsSemanticCache.store(query, answer)
     }
 }
